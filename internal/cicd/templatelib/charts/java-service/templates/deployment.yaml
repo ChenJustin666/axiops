@@ -1,0 +1,230 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sinozo.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.service.replicas }}
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  progressDeadlineSeconds: {{ .Values.deployment.progressDeadlineSeconds }}
+  selector:
+    matchLabels:
+      {{- include "sinozo.selector" . | nindent 6 }}
+  strategy:
+    {{- toYaml .Values.deployment.strategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "sinozo.labels" . | nindent 8 }}
+      {{- if or .Values.extraAnnotations .Values.monitoring.enabled }}
+      annotations:
+        {{- with .Values.extraAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.monitoring.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: {{ .Values.monitoring.path | quote }}
+        prometheus.io/port: {{ default .Values.service.port .Values.monitoring.port | quote }}
+        {{- end }}
+      {{- end }}
+    spec:
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.serviceAccountName }}
+      serviceAccountName: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.skywalking.enabled .Values.initContainers }}
+      initContainers:
+        {{- if .Values.skywalking.enabled }}
+        - name: skywalking-agent-init
+          image: {{ .Values.skywalking.agentImage | quote }}
+          imagePullPolicy: {{ .Values.skywalking.imagePullPolicy }}
+          command: ["/bin/sh", "-ec"]
+          args: ["cp -R /skywalking/agent /agent/"]
+          resources:
+            {{- toYaml .Values.skywalking.initResources | nindent 12 }}
+          volumeMounts:
+            - name: skywalking-agent
+              mountPath: /agent
+        {{- end }}
+        {{- with .Values.initContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: application
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          {{- if .Values.resources.enabled }}
+          resources:
+            requests:
+              {{- toYaml .Values.resources.requests | nindent 14 }}
+            limits:
+              {{- toYaml .Values.resources.limits | nindent 14 }}
+          {{- end }}
+          {{- range $field := list "command" "args" "envFrom" }}
+          {{- with index $.Values $field }}
+          {{ $field }}:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if .Values.java.enabled }}
+            - name: {{ .Values.java.optionsEnv }}
+              value: {{ include "sinozo.javaOptions" . | quote }}
+            {{- end }}
+            {{- with .Values.application.portEnv }}
+            - name: {{ . }}
+              value: {{ $.Values.service.port | quote }}
+            {{- end }}
+            - name: SPRING_APPLICATION_NAME
+              value: {{ include "sinozo.application" . | quote }}
+            {{- with .Values.application.profile }}
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.application.logLevel }}
+            - name: LOG_LEVEL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.application.timezone }}
+            - name: TZ
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if .Values.application.podIP }}
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            {{- end }}
+            {{- if .Values.nacos.enabled }}
+            {{- if .Values.nacos.configImport.enabled }}
+            - name: SPRING_CONFIG_IMPORT
+              value: {{ printf "%snacos:%s" (ternary "optional:" "" .Values.nacos.configImport.optional) (default (include "sinozo.application" .) .Values.nacos.configImport.dataId) | quote }}
+            {{- end }}
+            {{- range $scope := list "DISCOVERY" "CONFIG" }}
+            - name: SPRING_CLOUD_NACOS_{{ $scope }}_SERVERADDR
+              value: {{ $.Values.nacos.serverAddr | quote }}
+            - name: SPRING_CLOUD_NACOS_{{ $scope }}_NAMESPACE
+              value: {{ $.Values.nacos.namespace | quote }}
+            - name: SPRING_CLOUD_NACOS_{{ $scope }}_GROUP
+              value: {{ $.Values.nacos.group | quote }}
+            {{- end }}
+            - name: SPRING_CLOUD_NACOS_CONFIG_FILEEXTENSION
+              value: {{ .Values.nacos.fileExtension | quote }}
+            - name: SPRING_CLOUD_NACOS_CONFIG_REFRESHENABLED
+              value: {{ .Values.nacos.refreshEnabled | quote }}
+            {{- if .Values.nacos.auth.enabled }}
+            {{- range $scope := list "" "DISCOVERY_" "CONFIG_" }}
+            - name: SPRING_CLOUD_NACOS_{{ $scope }}USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.nacos.auth.secretName | quote }}
+                  key: {{ $.Values.nacos.auth.usernameKey | quote }}
+            - name: SPRING_CLOUD_NACOS_{{ $scope }}PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.nacos.auth.secretName | quote }}
+                  key: {{ $.Values.nacos.auth.passwordKey | quote }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.skywalking.enabled }}
+            - name: SW_AGENT_NAME
+              value: {{ default (include "sinozo.application" .) .Values.skywalking.serviceName | quote }}
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: {{ .Values.skywalking.backendService | quote }}
+            - name: SW_LOGGING_OUTPUT
+              value: console
+            {{- with .Values.skywalking.excludedPlugins }}
+            - name: SW_EXCLUDE_PLUGINS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.probes.enabled }}
+          {{- range $kind := list "startup" "readiness" "liveness" }}
+          {{- $probe := index $.Values.probes $kind }}
+          {{- if $probe.enabled }}
+          {{ $kind }}Probe:
+            {{- if eq $.Values.probes.type "tcp" }}
+            tcpSocket:
+              port: {{ default $.Values.service.port $.Values.probes.port }}
+            {{- else }}
+            httpGet:
+              path: {{ $.Values.probes.path | quote }}
+              port: {{ default $.Values.service.port $.Values.probes.port }}
+            {{- end }}
+            periodSeconds: {{ $probe.periodSeconds }}
+            timeoutSeconds: {{ $probe.timeoutSeconds }}
+            failureThreshold: {{ $probe.failureThreshold }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if or .Values.skywalking.enabled .Values.java.heapDump.enabled .Values.volumeMounts }}
+          volumeMounts:
+            {{- if .Values.skywalking.enabled }}
+            - name: skywalking-agent
+              mountPath: /skywalking
+              readOnly: true
+            {{- end }}
+            {{- if .Values.java.heapDump.enabled }}
+            - name: heapdump
+              mountPath: {{ .Values.java.heapDump.mountPath | quote }}
+            {{- end }}
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+        {{- with .Values.sidecars }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- if or .Values.skywalking.enabled .Values.java.heapDump.enabled .Values.volumes }}
+      volumes:
+        {{- if .Values.skywalking.enabled }}
+        - name: skywalking-agent
+          emptyDir: {}
+        {{- end }}
+        {{- if .Values.java.heapDump.enabled }}
+        - name: heapdump
+          {{- if .Values.java.heapDump.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.java.heapDump.existingClaim | quote }}
+          {{- else }}
+          emptyDir:
+            sizeLimit: {{ .Values.java.heapDump.sizeLimit | quote }}
+          {{- end }}
+        {{- end }}
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- range $field := list "nodeSelector" "tolerations" "affinity" "topologySpreadConstraints" }}
+      {{- with index $.Values $field }}
+      {{ $field }}:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}

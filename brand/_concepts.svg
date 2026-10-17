@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 576" width="840" height="576">
+  <defs>
+    <!-- primary blue -> cyan, used across variants -->
+    <linearGradient id="gA" x1="10%" y1="0%" x2="92%" y2="100%">
+      <stop offset="0%" stop-color="#0B5FE0"/>
+      <stop offset="52%" stop-color="#1D84FF"/>
+      <stop offset="100%" stop-color="#3FC6FF"/>
+    </linearGradient>
+    <linearGradient id="gB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3FC6FF"/>
+      <stop offset="100%" stop-color="#1D84FF"/>
+    </linearGradient>
+    <linearGradient id="gC" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1D84FF"/>
+      <stop offset="100%" stop-color="#38C0FC"/>
+    </linearGradient>
+    <linearGradient id="gTile" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A47C2"/>
+      <stop offset="55%" stop-color="#1D84FF"/>
+      <stop offset="100%" stop-color="#3FC6FF"/>
+    </linearGradient>
+    <radialGradient id="gGlow" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="840" height="576" fill="#ffffff"/>
+
+  <!-- ================= V1  Axis Ring ================= -->
+  <g transform="translate(44,44) scale(1.75)">
+    <circle cx="64" cy="64" r="57" fill="none" stroke="url(#gB)" stroke-width="2.2" opacity="0.28"/>
+    <g stroke="url(#gA)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M64 18 L33.14 100.77"/>
+      <path d="M64 18 L94.86 100.77"/>
+      <path d="M43.63 72.6 L84.37 72.6"/>
+    </g>
+    <path d="M14.64 35.5 A57 57 0 0 1 78.75 8.94" fill="none" stroke="#3FC6FF" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="78.75" cy="8.94" r="4.6" fill="#3FC6FF"/>
+  </g>
+
+  <!-- ================= V2  Node Mesh ================= -->
+  <g transform="translate(332,44) scale(1.75)">
+    <g stroke="url(#gA)" stroke-width="7" stroke-linecap="round" opacity="0.42" fill="none">
+      <path d="M64 24 L32 102"/>
+      <path d="M64 24 L96 102"/>
+      <path d="M45 76 L83 76"/>
+    </g>
+    <g fill="url(#gA)">
+      <circle cx="64" cy="24" r="13"/>
+      <circle cx="32" cy="102" r="12"/>
+      <circle cx="96" cy="102" r="12"/>
+      <circle cx="45" cy="76" r="8.5"/>
+      <circle cx="83" cy="76" r="8.5"/>
+    </g>
+  </g>
+
+  <!-- ================= V3  Nova Bold ================= -->
+  <g transform="translate(620,44) scale(1.75)">
+    <path d="M64 10 L103 109 L84.5 109 L64 55 L43.5 109 L25 109 Z" fill="url(#gA)"/>
+    <rect x="42" y="80" width="44" height="13" rx="2.5" fill="url(#gA)"/>
+  </g>
+
+  <!-- ================= V4  Orbit ================= -->
+  <g transform="translate(44,332) scale(1.75)">
+    <ellipse cx="64" cy="64" rx="56" ry="24" fill="none" stroke="url(#gB)" stroke-width="2.4" opacity="0.30" transform="rotate(30 64 64)"/>
+    <ellipse cx="64" cy="64" rx="56" ry="24" fill="none" stroke="url(#gB)" stroke-width="2.8" opacity="0.85" transform="rotate(-30 64 64)"/>
+    <g stroke="url(#gA)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M64 22 L35 99"/>
+      <path d="M64 22 L93 99"/>
+      <path d="M45 73 L83 73"/>
+    </g>
+    <circle cx="112.5" cy="36" r="5" fill="#3FC6FF"/>
+    <circle cx="15.5" cy="92" r="4" fill="#1D84FF"/>
+  </g>
+
+  <!-- ================= V5  Tile (app icon) ================= -->
+  <g transform="translate(332,332) scale(1.75)">
+    <rect x="2" y="2" width="124" height="124" rx="30" fill="url(#gTile)"/>
+    <rect x="2" y="2" width="124" height="124" rx="30" fill="url(#gGlow)"/>
+    <g stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M64 22 L35 99"/>
+      <path d="M64 22 L93 99"/>
+      <path d="M45 73 L83 73"/>
+    </g>
+    <circle cx="110" cy="34" r="4.5" fill="#ffffff" opacity="0.85"/>
+  </g>
+
+  <!-- ================= V6  Prism / layered ================= -->
+  <g transform="translate(620,332) scale(1.75)">
+    <g stroke="url(#gA)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M64 20 L30 101"/>
+      <path d="M64 20 L98 101"/>
+    </g>
+    <g fill="url(#gC)">
+      <rect x="40" y="66" width="48" height="11" rx="5.5"/>
+      <rect x="34" y="84" width="60" height="11" rx="5.5" opacity="0.75"/>
+      <rect x="28" y="102" width="72" height="11" rx="5.5" opacity="0.55"/>
+    </g>
+  </g>
+</svg>

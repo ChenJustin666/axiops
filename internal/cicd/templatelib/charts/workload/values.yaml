@@ -1,0 +1,122 @@
+# Choose the workload matching the application. Job/CronJob do not expose a Service.
+workload:
+  kind: Deployment
+replicaCount: 1
+image:
+  repository: example.invalid/team/service
+  tag: latest
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+# Native Kubernetes container fields. Use secretKeyRef/secretRef for existing secrets.
+env: []
+envFrom: []
+command: []
+args: []
+initContainers: []
+sidecars: []
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+terminationGracePeriodSeconds: 30
+serviceAccount:
+  create: false
+  name: ""
+  automountServiceAccountToken: false
+  annotations: {}
+rbac:
+  create: false
+  rules: []
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations: {}
+  nodePort: null
+ingress:
+  enabled: false
+  className: ""
+  labels: {}
+  annotations: {}
+  hosts: []
+  # Example: [{host: app.example.com, paths: [{path: /, pathType: Prefix}]}]
+  # Leave empty to disable TLS. ALB may terminate TLS without a Kubernetes secretName.
+  tls: []
+probes:
+  readiness: {}
+  liveness: {}
+  startup: {}
+# Example readiness: {tcpSocket: {port: 8080}, initialDelaySeconds: 5}
+monitoring:
+  enabled: false
+  path: /metrics
+  port: 8080
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: null
+  behavior: {}
+pdb:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: null
+persistence:
+  enabled: false
+  existingClaim: ""
+  size: 10Gi
+  storageClass: null
+  accessModes: [ReadWriteOnce]
+  mountPath: /data
+  # New standalone PVCs retain data when the Release is removed; delete explicitly if unneeded.
+  retain: true
+  readOnly: false
+# Each key produces a ConfigMap named <release>-<key> and an optional directory mount.
+# Example: app: {data: {application.yaml: "server:\n  port: 8080\n"}, mountPath: /app/config}
+configMaps: {}
+# Secret keys come from platform credential bindings, not plaintext in values.
+# Example: auth: {type: Opaque} with credential path secrets.auth.stringData.password
+secrets: {}
+# Existing Secrets mounted as files: [{name: app-auth, mountPath: /run/secrets/app, optional: false}]
+secretMounts: []
+# Additional native volumes/mounts (e.g. projected, CSI, emptyDir).
+volumes: []
+volumeMounts: []
+statefulSet:
+  podManagementPolicy: OrderedReady
+  updateStrategy: {type: RollingUpdate}
+  # Native extra per-replica claims, in addition to persistence when enabled.
+  volumeClaimTemplates: []
+deployment:
+  strategy: {type: RollingUpdate}
+  progressDeadlineSeconds: 600
+daemonSet:
+  updateStrategy: {type: RollingUpdate}
+job:
+  restartPolicy: OnFailure
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 3600
+cronJob:
+  schedule: "0 2 * * *"
+  suspend: false
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+networkPolicy:
+  enabled: false
+  policyTypes: [Ingress]
+  ingress: []
+  egress: []

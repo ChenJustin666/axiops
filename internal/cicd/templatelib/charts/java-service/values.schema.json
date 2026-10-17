@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["service", "image", "resources", "application", "java", "nacos", "skywalking", "probes", "ingress"],
+  "properties": {
+    "service": {
+      "type": "object", "additionalProperties": false,
+      "required": ["enabled", "port", "replicas", "type"],
+      "properties": {
+        "enabled": {"type": "boolean"}, "name": {"type": "string", "maxLength": 63, "pattern": "^([a-z]([-a-z0-9]*[a-z0-9])?)?$"},
+        "port": {"$ref": "#/definitions/port"}, "replicas": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "type": {"enum": ["ClusterIP", "NodePort", "LoadBalancer"]},
+        "annotations": {"$ref": "#/definitions/stringMap"}
+      }
+    },
+    "image": {
+      "type": "object", "additionalProperties": false, "required": ["repository", "tag", "pullPolicy"],
+      "properties": {"repository": {"type": "string", "minLength": 1}, "tag": {"type": "string", "minLength": 1}, "pullPolicy": {"$ref": "#/definitions/pullPolicy"}}
+    },
+    "imagePullSecrets": {"type": "array", "items": {"type": "object", "required": ["name"], "properties": {"name": {"$ref": "#/definitions/name"}}}},
+    "resources": {
+      "type": "object", "additionalProperties": false, "required": ["enabled", "requests", "limits"],
+      "properties": {"enabled": {"type": "boolean"}, "requests": {"$ref": "#/definitions/quantities"}, "limits": {"$ref": "#/definitions/quantities"}}
+    },
+    "application": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"name": {"type": "string", "pattern": "^[A-Za-z0-9_.-]*$"}, "profile": {"type": "string"}, "portEnv": {"type": "string", "pattern": "^([A-Za-z_][A-Za-z0-9_]*)?$"}, "logLevel": {"type": "string"}, "timezone": {"type": "string"}, "podIP": {"type": "boolean"}}
+    },
+    "java": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean"}, "opts": {"type": "string"}, "optionsEnv": {"enum": ["JAVA_TOOL_OPTIONS", "JAVA_OPTS"]},
+        "heapDump": {"type": "object", "additionalProperties": false, "properties": {"enabled": {"type": "boolean"}, "mountPath": {"type": "string", "pattern": "^/[A-Za-z0-9/_-]+$"}, "existingClaim": {"$ref": "#/definitions/optionalName"}, "sizeLimit": {"type": "string", "minLength": 1}, "exitOnOutOfMemory": {"type": "boolean"}}}
+      }
+    },
+    "nacos": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean"}, "serverAddr": {"type": "string"}, "namespace": {"type": "string"}, "group": {"type": "string", "minLength": 1}, "fileExtension": {"enum": ["yaml", "yml", "properties"]}, "refreshEnabled": {"type": "boolean"},
+        "configImport": {"type": "object", "additionalProperties": false, "properties": {"enabled": {"type": "boolean"}, "optional": {"type": "boolean"}, "dataId": {"type": "string"}}},
+        "auth": {"type": "object", "additionalProperties": false, "properties": {"enabled": {"type": "boolean"}, "secretName": {"$ref": "#/definitions/optionalName"}, "usernameKey": {"$ref": "#/definitions/secretKey"}, "passwordKey": {"$ref": "#/definitions/secretKey"}}}
+      }
+    },
+    "skywalking": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"enabled": {"type": "boolean"}, "agentImage": {"type": "string", "minLength": 1}, "imagePullPolicy": {"$ref": "#/definitions/pullPolicy"}, "backendService": {"type": "string"}, "serviceName": {"type": "string"}, "excludedPlugins": {"type": "string"}, "initResources": {"type": "object", "properties": {"requests": {"$ref": "#/definitions/quantities"}, "limits": {"$ref": "#/definitions/quantities"}}, "additionalProperties": false}}
+    },
+    "env": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}, "value": {"type": "string"}, "valueFrom": {"type": "object"}}, "oneOf": [{"required": ["value"], "not": {"required": ["valueFrom"]}}, {"required": ["valueFrom"], "not": {"required": ["value"]}}]}},
+    "envFrom": {"type": "array", "items": {"type": "object"}},
+    "command": {"$ref": "#/definitions/strings"}, "args": {"$ref": "#/definitions/strings"},
+    "probes": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"enabled": {"type": "boolean"}, "type": {"enum": ["tcp", "http"]}, "port": {"type": "integer", "minimum": 0, "maximum": 65535}, "path": {"type": "string"}, "startup": {"$ref": "#/definitions/probe"}, "readiness": {"$ref": "#/definitions/probe"}, "liveness": {"$ref": "#/definitions/probe"}}
+    },
+    "monitoring": {"type": "object", "additionalProperties": false, "properties": {"enabled": {"type": "boolean"}, "path": {"type": "string", "pattern": "^/"}, "port": {"type": "integer", "minimum": 0, "maximum": 65535}}},
+    "extraAnnotations": {"$ref": "#/definitions/stringMap"}, "podLabels": {"$ref": "#/definitions/stringMap"}, "nodeSelector": {"$ref": "#/definitions/stringMap"},
+    "deployment": {"type": "object", "additionalProperties": false, "properties": {"strategy": {"type": "object", "properties": {"type": {"enum": ["RollingUpdate", "Recreate"]}, "rollingUpdate": {"type": ["object", "null"]}}, "additionalProperties": false}, "revisionHistoryLimit": {"type": "integer", "minimum": 0}, "progressDeadlineSeconds": {"type": "integer", "minimum": 1}}},
+    "terminationGracePeriodSeconds": {"type": "integer", "minimum": 0},
+    "serviceAccountName": {"$ref": "#/definitions/optionalName"}, "automountServiceAccountToken": {"type": "boolean"},
+    "podSecurityContext": {"type": "object"}, "securityContext": {"type": "object"}, "affinity": {"type": "object"},
+    "tolerations": {"type": "array", "items": {"type": "object"}}, "topologySpreadConstraints": {"type": "array", "items": {"type": "object"}},
+    "initContainers": {"type": "array", "items": {"type": "object"}}, "sidecars": {"type": "array", "items": {"type": "object"}},
+    "volumes": {"type": "array", "items": {"type": "object"}}, "volumeMounts": {"type": "array", "items": {"type": "object"}},
+    "ingress": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"enabled": {"type": "boolean"}, "items": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name", "hosts"], "properties": {
+        "name": {"$ref": "#/definitions/name"}, "className": {"$ref": "#/definitions/optionalName"}, "labels": {"$ref": "#/definitions/stringMap"}, "annotations": {"$ref": "#/definitions/stringMap"},
+        "hosts": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["host", "paths"], "additionalProperties": false, "properties": {"host": {"type": "string"}, "paths": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["path"], "properties": {"path": {"type": "string", "pattern": "^/"}, "pathType": {"enum": ["Prefix", "Exact", "ImplementationSpecific"]}}}}}}},
+        "tls": {"type": "object", "additionalProperties": false, "properties": {"enabled": {"type": "boolean"}, "hosts": {"$ref": "#/definitions/strings"}, "secretName": {"$ref": "#/definitions/optionalName"}}}
+      }}}}
+    }
+  },
+  "definitions": {
+    "name": {"type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"},
+    "optionalName": {"type": "string", "maxLength": 253, "pattern": "^([a-z0-9]([-a-z0-9.]*[a-z0-9])?)?$"},
+    "secretKey": {"type": "string", "minLength": 1, "maxLength": 253, "pattern": "^[A-Za-z0-9_.-]+$"},
+    "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+    "pullPolicy": {"enum": ["Always", "IfNotPresent", "Never"]},
+    "strings": {"type": "array", "items": {"type": "string"}},
+    "stringMap": {"type": "object", "additionalProperties": {"type": "string"}},
+    "quantities": {"type": "object", "properties": {"cpu": {"type": ["string", "number"]}, "memory": {"type": "string"}, "ephemeral-storage": {"type": "string"}}, "additionalProperties": false},
+    "probe": {"type": "object", "additionalProperties": false, "properties": {"enabled": {"type": "boolean"}, "periodSeconds": {"type": "integer", "minimum": 1}, "timeoutSeconds": {"type": "integer", "minimum": 1}, "failureThreshold": {"type": "integer", "minimum": 1}}}
+  }
+}

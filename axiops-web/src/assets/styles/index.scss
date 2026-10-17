@@ -1,0 +1,38 @@
+// AxiOps 自托管字体（Sora / Inter / JetBrains Mono），必须最先引入
+@use './core/fonts.scss';
+
+// 重置默认样式
+@use './core/reset.scss';
+
+// 应用全局样式
+@use './core/app.scss';
+
+// Element Plus 样式优化
+@use './core/el-ui.scss';
+
+// AxiOps 控件层级（按钮主/次/弱三级）—— 必须在 el-ui.scss 之后
+@use './core/controls.scss';
+
+// Element Plus 暗黑主题
+@use './core/el-dark.scss';
+
+// 暗黑主题样式优化
+@use './core/dark.scss';
+
+// 路由切换动画
+@use './core/router-transition';
+
+// 主题切换过渡优化
+@use './core/theme-change.scss';
+
+// 主题切换圆形扩散动画
+@use './core/theme-animation.scss';
+
+// 统一折叠面板样式
+@use './core/components/unified-collapse.scss';
+
+// AxiOps 品牌设计 Token（纯变量定义，不覆盖任何现有样式）
+@use './core/brand.scss';
+
+// AxiOps 排版系统（字体族 / 渲染质量 / 数字对齐）
+@use './core/typography.scss';

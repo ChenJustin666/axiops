@@ -1,0 +1,172 @@
+.inspection-page {
+  min-height: 100%;
+  padding: 0;
+  background: var(--el-fill-color-extra-light);
+}
+
+.card-header-row,
+.pagination-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-header-row > :last-child {
+  margin-left: auto;
+}
+
+.filter-card,
+.filter-bar,
+.table-card,
+.panel-card,
+.group-panel,
+.rules-panel {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
+}
+
+.filter-card,
+.filter-bar,
+.table-card {
+  margin-bottom: 16px;
+}
+
+.filter-card :deep(.el-card__body),
+.table-card :deep(.el-card__body),
+.panel-card :deep(.el-card__body) {
+  padding: 16px;
+}
+
+.table-card :deep(.el-card__header),
+.panel-card :deep(.el-card__header) {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.filter-form :deep(.el-form-item) {
+  margin: 0;
+}
+
+.filter-form :deep(.el-form-item__label) {
+  padding-right: 8px;
+  font-weight: 500;
+  color: var(--el-text-color-regular);
+}
+
+.filter-form :deep(.el-form-item.filter-actions) {
+  flex: 0 0 auto;
+  min-width: max-content;
+  margin-left: auto;
+}
+
+.filter-actions :deep(.el-form-item__content) {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.filter-actions :deep(.el-button + .el-button),
+.row-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.card-title {
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+}
+
+.card-subtitle,
+.field-tip,
+.meta-block span {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.meta-block {
+  min-width: 0;
+}
+
+.meta-block strong,
+.meta-block span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table {
+  width: 100%;
+}
+
+.data-table :deep(.el-table__header th.el-table__cell) {
+  font-weight: 600;
+  color: var(--el-text-color-regular);
+  background: var(--el-fill-color-extra-light);
+}
+
+.data-table :deep(.el-table__cell) {
+  padding: 10px 0;
+}
+
+.data-table :deep(.el-table__inner-wrapper::before) {
+  height: 0;
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.dialog-footer-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dialog-footer-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.pagination-row {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+@media (width <= 768px) {
+  .card-header-row,
+  .pagination-row {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .filter-form {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .filter-form :deep(.el-form-item.filter-actions) {
+    width: 100%;
+    min-width: 0;
+    margin-left: auto;
+  }
+
+  .filter-actions :deep(.el-form-item__content) {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}

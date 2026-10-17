@@ -1,0 +1,75 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+vendor
+.idea
+.vscode
+dist
+logs
+# Test binary, built with `go test -c`
+*.test
+*.baiduyun.uploading.cfg
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+coverage*.*
+*.DS_Store
+# Dependency directories (remove the comment below to include it)
+# vendor/
+.DS_Store
+# Go workspace file
+go.work
+
+local
+local/*
+.claude
+.docs
+tmp
+.worktrees
+
+devops
+!common/devops/
+!common/devops/**
+
+# Identity migration runtime files may contain database credentials or
+# reviewed personnel mappings. Keep only the committed *.example templates.
+configs/identity-inventory.yaml
+configs/identity-import.yaml
+configs/identity-mapping.json
+
+# AxiOps local state and dependency caches
+/.gocache*/
+/.gomodcache/
+/.gotmp*/
+/.pnpm-store/
+/.research*/
+/.vite/
+/.workbuddy/
+/.agents/
+/reference/
+/cache/
+/bin/
+/axiops-web/.corepack/
+*.log
+*.bak
+*.zip
+*.key
+*.pem
+*.p12
+*.pfx
+/config/local/
+/configs/*.yaml
+!/configs/*.example.yaml
+/application/*/etc/*.yaml
+!/application/*/etc/*.example.yaml
+/sql/db-init.sql
+/sql/autoops-navicat*
+/sql/mongo-export/
+/HANDOFF.md
+/tmp-*.txt
+/start

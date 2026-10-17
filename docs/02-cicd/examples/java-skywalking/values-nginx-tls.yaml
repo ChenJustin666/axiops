@@ -1,0 +1,11 @@
+ingress:
+  enabled: true
+  items:
+    - name: root
+      className: nginx
+      annotations:
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      hosts:
+        - host: test-api.zovrikiq583.xyz
+          paths: [{path: /, pathType: Prefix}]
+      tls: {enabled: true, secretName: app-tls}  # 目标 Namespace 预先创建证书 Secret

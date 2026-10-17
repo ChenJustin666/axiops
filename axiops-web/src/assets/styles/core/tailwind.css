@@ -1,0 +1,246 @@
+@import 'tailwindcss';
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==================== Light Mode Variables ==================== */
+:root {
+  /* Base Colors */
+  --art-color: #ffffff;
+  --theme-color: var(--main-color);
+
+  /* Theme Colors - OKLCH Format */
+  --art-primary: oklch(0.7 0.23 260);
+  --art-secondary: oklch(0.72 0.19 231.6);
+  --art-error: oklch(0.73 0.15 25.3);
+  --art-info: oklch(0.58 0.03 254.1);
+  --art-success: oklch(0.78 0.17 166.1);
+  --art-warning: oklch(0.78 0.14 75.5);
+  --art-danger: oklch(0.68 0.22 25.3);
+
+  /* Gray Scale - Light Mode */
+  --art-gray-100: #f9fafb;
+  --art-gray-200: #f2f4f5;
+  --art-gray-300: #e6eaeb;
+  --art-gray-400: #dbdfe1;
+  --art-gray-500: #949eb7;
+  --art-gray-600: #7987a1;
+  --art-gray-700: #4d5875;
+  --art-gray-800: #383853;
+  --art-gray-900: #323251;
+
+  /* Border Colors */
+  --art-card-border: rgba(0, 0, 0, 0.08);
+
+  --default-border: #e2e8ee;
+  --default-border-dashed: #dbdfe9;
+
+  /* Background Colors */
+  /* AxiOps uses a clean white canvas across modules. Cards still use borders
+     and light fills to preserve hierarchy without a gray page backdrop. */
+  --default-bg-color: #ffffff;
+  --default-box-color: #ffffff;
+
+  /* Compatibility aliases used by feature pages. Keep these aliases in one
+     place so light/dark themes never fall back to invalid CSS values. */
+  --art-bg-color: var(--default-box-color);
+  --art-main-bg-color: var(--default-bg-color);
+  --art-bg-color-overlay: rgba(255, 255, 255, 0.82);
+  --art-border-color: var(--default-border);
+  --art-text-gray-400: var(--art-gray-400);
+  --art-text-gray-500: var(--art-gray-500);
+  --art-text-gray-600: var(--art-gray-600);
+  --art-text-gray-700: var(--art-gray-700);
+  --art-text-gray-800: var(--art-gray-800);
+  --art-text-gray-900: var(--art-gray-900);
+
+  /* Hover Color */
+  --art-hover-color: #edeff0;
+
+  /* Active Color */
+  --art-active-color: #f2f4f5;
+
+  /* Element Component Active Color */
+  --art-el-active-color: #f2f4f5;
+}
+
+/* ==================== Dark Mode Variables ==================== */
+/* AxiOps 深色主题：以品牌深蓝为基调的「冷石板」色阶，替代原中性纯黑。
+   底 → 面 → 描边 三层用同一色相（约 220°）拉开明度，避免纯黑带来的割裂感。 */
+.dark {
+  /* Base Colors */
+  --art-color: #0b1220;
+
+  /* Gray Scale - Dark Mode（100 最深 → 900 最浅，与浅色模式相反） */
+  --art-gray-100: #0d1421;
+  --art-gray-200: #141b2a;
+  --art-gray-300: #232c3e;
+  --art-gray-400: #38445c;
+  --art-gray-500: #5d6b85;
+  --art-gray-600: #7d8ba3;
+  --art-gray-700: #a3aec2;
+  --art-gray-800: #c8d0de;
+  --art-gray-900: #e8edf5;
+
+  /* Border Colors */
+  --art-card-border: rgba(255, 255, 255, 0.09);
+
+  --default-border: rgba(255, 255, 255, 0.11);
+  --default-border-dashed: #2c3648;
+
+  /* Background Colors
+     页面底原为 #070707（纯黑），卡片面原为 #161618（中性灰），改为品牌深蓝灰 */
+  --default-bg-color: #0b1220;
+  --default-box-color: #141a28;
+
+  /* Keep the same aliases in dark mode with readable contrast. */
+  --art-bg-color: var(--default-box-color);
+  --art-main-bg-color: var(--default-bg-color);
+  --art-bg-color-overlay: rgba(11, 18, 32, 0.86);
+  --art-border-color: var(--default-border);
+  --art-text-gray-400: var(--art-gray-400);
+  --art-text-gray-500: var(--art-gray-500);
+  --art-text-gray-600: var(--art-gray-600);
+  --art-text-gray-700: var(--art-gray-700);
+  --art-text-gray-800: var(--art-gray-800);
+  --art-text-gray-900: var(--art-gray-900);
+
+  /* Hover Color */
+  --art-hover-color: #1c2434;
+
+  /* Active Color */
+  --art-active-color: #19202e;
+
+  /* Element Component Active Color */
+  --art-el-active-color: #232c3e;
+}
+
+/* ==================== Tailwind Theme Configuration ==================== */
+@theme {
+  /* Typography — 指向 AxiOps 品牌字体栈（见 core/typography.scss） */
+  --font-sans: var(--ax-font-sans);
+  --font-mono: var(--ax-font-mono);
+
+  /* Box Color (Light: white / Dark: black) */
+  --color-box: var(--default-box-color);
+
+  /* System Theme Color */
+  --color-theme: var(--theme-color);
+
+  /* Hover Color */
+  --color-hover-color: var(--art-hover-color);
+
+  /* Active Color */
+  --color-active-color: var(--art-active-color);
+
+  /* Active Color */
+  --color-el-active-color: var(--art-active-color);
+
+  /* ElementPlus Theme Colors */
+  --color-primary: var(--art-primary);
+  --color-secondary: var(--art-secondary);
+  --color-error: var(--art-error);
+  --color-info: var(--art-info);
+  --color-success: var(--art-success);
+  --color-warning: var(--art-warning);
+  --color-danger: var(--art-danger);
+
+  /* Gray Scale Colors (Auto-adapts to dark mode) */
+  --color-g-100: var(--art-gray-100);
+  --color-g-200: var(--art-gray-200);
+  --color-g-300: var(--art-gray-300);
+  --color-g-400: var(--art-gray-400);
+  --color-g-500: var(--art-gray-500);
+  --color-g-600: var(--art-gray-600);
+  --color-g-700: var(--art-gray-700);
+  --color-g-800: var(--art-gray-800);
+  --color-g-900: var(--art-gray-900);
+}
+
+/* ==================== Custom Border Radius Utilities ==================== */
+@utility rounded-custom-xs {
+  border-radius: calc(var(--custom-radius) / 2);
+}
+
+@utility rounded-custom-sm {
+  border-radius: calc(var(--custom-radius) / 2 + 2px);
+}
+
+/* ==================== Custom Utility Classes ==================== */
+@layer utilities {
+  /* Flexbox Layout Utilities */
+  .flex-c {
+    @apply flex items-center;
+  }
+
+  .flex-b {
+    @apply flex justify-between;
+  }
+
+  .flex-cc {
+    @apply flex items-center justify-center;
+  }
+
+  .flex-cb {
+    @apply flex items-center justify-between;
+  }
+
+  /* Transition Utilities */
+  .tad-200 {
+    @apply transition-all duration-200;
+  }
+
+  .tad-300 {
+    @apply transition-all duration-300;
+  }
+
+  /* Border Utilities */
+  .border-full-d {
+    @apply border border-[var(--default-border)];
+  }
+
+  .border-b-d {
+    @apply border-b border-[var(--default-border)];
+  }
+
+  .border-t-d {
+    @apply border-t border-[var(--default-border)];
+  }
+
+  .border-l-d {
+    @apply border-l border-[var(--default-border)];
+  }
+
+  .border-r-d {
+    @apply border-r border-[var(--default-border)];
+  }
+
+  /* Cursor Utilities */
+  .c-p {
+    @apply cursor-pointer;
+  }
+}
+
+/* ==================== Custom Component Classes ==================== */
+@layer components {
+  /* Art Card Header Component
+     底部间距统一到 --ax-space-3 (12px)：原 pb-1 只有 4px，
+     与 ArtCard 组件内的 margin-bottom: 12px 不一致，导致仪表盘卡片标题贴太紧。 */
+  .art-card-header {
+    @apply flex items-start justify-between pr-6;
+
+    padding-bottom: var(--ax-space-3);
+
+    .title {
+      h4 {
+        @apply text-lg font-medium text-g-900;
+      }
+
+      p {
+        @apply mt-1 text-sm text-g-600;
+
+        span {
+          @apply ml-2 font-medium;
+        }
+      }
+    }
+  }
+}

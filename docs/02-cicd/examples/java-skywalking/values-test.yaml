@@ -1,0 +1,39 @@
+# card-scout-gateway 测试环境覆盖值；服务名默认跟随 AxiOps 服务编码。
+service:
+  port: 28080
+  replicas: 1
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {cpu: 500m, memory: 512Mi}
+application:
+  profile: test
+  logLevel: debug
+nacos:
+  enabled: true
+  serverAddr: mse-7a42cca7-nacos-ans.mse.aliyuncs.com:8848
+  namespace: rsc01-test
+  group: DEFAULT_GROUP
+  auth: {enabled: false}
+skywalking:
+  enabled: false
+probes:
+  enabled: true
+  type: tcp
+  startup: {periodSeconds: 10, failureThreshold: 30}
+monitoring:
+  enabled: true
+extraAnnotations:
+  prometheus.io/jvm: "true"
+  prometheus.io/jvmpath: /actuator/prometheus
+ingress:
+  enabled: true
+  items:
+    - name: root
+      className: alb
+      labels: {ingress-controller: alb}
+      annotations:
+        alb.ingress.kubernetes.io/group.name: rsc01
+      hosts:
+        - host: test-api.zovrikiq583.xyz
+          paths: [{path: /, pathType: Prefix}]
+      tls: {enabled: false}

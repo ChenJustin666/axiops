@@ -1,0 +1,53 @@
+{{- if .Values.ingress.enabled }}
+{{- range $item := .Values.ingress.items }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ printf "%s-%s-ingress" $.Release.Name $item.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "sinozo.labels" $ | nindent 4 }}
+    {{- with $item.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $item.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $item.className }}
+  ingressClassName: {{ . | quote }}
+  {{- end }}
+  {{- $tls := default dict $item.tls }}
+  {{- if $tls.enabled }}
+  tls:
+    - hosts:
+        {{- if $tls.hosts }}
+        {{- toYaml $tls.hosts | nindent 8 }}
+        {{- else }}
+        {{- range $item.hosts }}
+        - {{ .host | quote }}
+        {{- end }}
+        {{- end }}
+      {{- with $tls.secretName }}
+      secretName: {{ . | quote }}
+      {{- end }}
+  {{- end }}
+  rules:
+    {{- range $item.hosts }}
+    - {{- if .host }} host: {{ .host | quote }}{{- end }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path | quote }}
+            pathType: {{ default "Prefix" .pathType }}
+            backend:
+              service:
+                name: {{ include "sinozo.service" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}

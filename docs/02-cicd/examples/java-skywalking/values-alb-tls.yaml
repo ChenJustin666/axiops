@@ -1,0 +1,19 @@
+# 替换当前环境的 ingress 数组；可为同一服务添加多个独立路由。
+ingress:
+  enabled: true
+  items:
+    - name: root
+      className: alb
+      labels: {ingress-controller: alb}
+      annotations:
+        alb.ingress.kubernetes.io/group.name: rsc01
+        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+        alb.ingress.kubernetes.io/ssl-redirect: "true"
+        alb.ingress.kubernetes.io/enable-cors: "true"
+        alb.ingress.kubernetes.io/cors-allow-origin: "*"
+        alb.ingress.kubernetes.io/cors-allow-methods: GET,HEAD,POST,PUT,DELETE,OPTIONS,PATCH
+        alb.ingress.kubernetes.io/cors-allow-headers: "*"
+      hosts:
+        - host: test-api.zovrikiq583.xyz
+          paths: [{path: /, pathType: Prefix}]
+      tls: {enabled: true}       # hosts 跟随规则，不生成不存在的 Secret

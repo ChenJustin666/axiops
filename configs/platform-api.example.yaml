@@ -1,0 +1,46 @@
+# AxiOps Platform API 配置
+Name: axiops-platform-api
+Host: 0.0.0.0
+Port: 8090
+
+MySQL:
+  Host: 127.0.0.1
+  Port: 3306
+  User: root
+  Password: "REPLACE_ME"
+  Database: axiops
+  Charset: utf8mb4
+  MaxIdle: 10
+  MaxOpen: 100
+
+Migrations:
+  # DDL is applied once by axiops-migrate before services start.
+  AutoApply: false
+  LockTimeoutSeconds: 30
+
+Redis:
+  Host: 127.0.0.1:6379
+  Password: "REPLACE_ME"
+  DB: 2
+
+# Disabled until identity_link has been populated and portal-rpc is reachable.
+LegacyIdentity:
+  Enabled: false
+  Provider: legacy_autoops
+  TimeoutMS: 1500
+  PortalRPC:
+    Endpoints:
+      - 127.0.0.1:30010
+    NonBlock: true
+    Timeout: 1500
+
+JWT:
+  Secret: "REPLACE_ME"
+  AccessExpireSeconds: 7200
+  RefreshExpireSeconds: 604800
+
+# Required for credential create/update. Inject from a secret manager in each environment.
+CredentialEncryptionKey: ""
+
+Log:
+  Level: info

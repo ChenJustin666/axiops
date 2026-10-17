@@ -1,0 +1,278 @@
+/**
+ * 企业级 B-End UI 样式变量
+ * 遵循简洁、高效、信息密度高的设计原则
+ */
+
+// 圆角变量
+$radius-button: 2px;
+$radius-container: 4px;
+$radius-card: 4px;
+$radius-input: 4px;
+$radius-tag: 2px;
+$radius-collapse: 4px;
+
+// 边框颜色
+$border-color-base: #dcdfe6;
+$border-color-light: #e4e7ed;
+$border-color-lighter: #ebeef5;
+$border-color-extra-light: #f2f6fc;
+
+// 背景颜色
+$bg-white: #ffffff;
+$bg-page: #f5f7fa;
+$bg-section: #fafafa;
+$bg-hover: #f5f7fa;
+$bg-selected: #ecf5ff;
+
+// 文字颜色
+$text-primary: #303133;
+$text-regular: #606266;
+$text-secondary: #909399;
+$text-placeholder: #c0c4cc;
+
+// 主题色
+$color-primary: #409eff;
+$color-success: #67c23a;
+$color-warning: #e6a23c;
+$color-danger: #f56c6c;
+$color-info: #909399;
+
+// 间距变量
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 20px;
+$spacing-xxl: 24px;
+
+// 表格行高
+$table-row-height: 40px;
+$table-header-height: 40px;
+
+// 表单区块样式 mixin
+@mixin form-section {
+  margin-bottom: $spacing-lg;
+  padding: $spacing-md $spacing-lg;
+  background: $bg-section;
+  border-radius: $radius-container;
+  border: 1px solid $border-color-light;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// 区块标题样式 mixin
+@mixin section-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid $border-color-light;
+  font-size: 14px;
+  font-weight: 500;
+  color: $text-primary;
+
+  .section-icon {
+    color: $color-primary;
+  }
+
+  .section-required {
+    color: $color-danger;
+    font-size: 14px;
+  }
+
+  .section-desc {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 400;
+    color: $text-secondary;
+  }
+}
+
+// 键值对行样式 mixin
+@mixin key-value-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: $bg-white;
+  border-radius: $radius-container;
+  border: 1px solid $border-color-base;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: $color-primary;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .separator {
+    flex-shrink: 0;
+    color: $text-secondary;
+    font-weight: 500;
+  }
+}
+
+// 折叠面板标题样式 mixin
+@mixin collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $color-primary;
+  }
+
+  .collapse-icon {
+    margin-left: auto;
+    transition: transform 0.2s;
+
+    &.collapsed {
+      transform: rotate(-90deg);
+    }
+  }
+}
+
+// 卡片无阴影样式 mixin
+@mixin card-flat {
+  border: 1px solid $border-color-light;
+  box-shadow: none;
+  border-radius: $radius-card;
+}
+
+// 表格紧凑样式 mixin
+@mixin table-compact {
+  :deep(.el-table__row) {
+    height: $table-row-height;
+
+    td {
+      padding: $spacing-xs 0;
+    }
+  }
+
+  :deep(.el-table__header-wrapper) {
+    th {
+      height: $table-header-height;
+      padding: $spacing-xs 0;
+      background: $bg-section;
+    }
+  }
+}
+
+// 弹窗内容区滚动样式 mixin
+@mixin dialog-content-scroll {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: $spacing-sm;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-color-base;
+    border-radius: 3px;
+
+    &:hover {
+      background: $text-placeholder;
+    }
+  }
+}
+
+// 信息提示样式 mixin
+@mixin info-tip {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: $radius-container;
+  font-size: 12px;
+  color: #1e40af;
+
+  svg {
+    flex-shrink: 0;
+    color: $color-primary;
+  }
+}
+
+// 警告提示样式 mixin
+@mixin warning-tip {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: $radius-container;
+  font-size: 12px;
+  color: #92400e;
+
+  svg {
+    flex-shrink: 0;
+    color: $color-warning;
+  }
+}
+
+// Tab 样式（简洁风格）mixin
+@mixin tabs-simple {
+  .tabs-nav {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xxl;
+    border-bottom: 1px solid $border-color-lighter;
+
+    .tab-item {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      padding: $spacing-md 0;
+      font-size: 14px;
+      font-weight: 400;
+      color: $text-secondary;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+
+      &:hover {
+        color: $color-primary;
+      }
+
+      &.is-active {
+        color: $color-primary;
+        font-weight: 500;
+        border-bottom-color: $color-primary;
+      }
+    }
+  }
+}
+
+// 模式切换按钮样式 mixin
+@mixin mode-switch {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-lg;
+
+  .radio-content {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    font-size: 12px;
+  }
+}
+
+// 对话框底部按钮样式 mixin
+@mixin dialog-footer {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+}

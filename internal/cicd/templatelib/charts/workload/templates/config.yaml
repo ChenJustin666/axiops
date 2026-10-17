@@ -1,0 +1,24 @@
+{{ range $key,$config := .Values.configMaps }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-%s" $.Release.Name $key }}
+data:
+{{ toYaml $config.data | indent 2 }}
+{{ end }}
+{{ range $key,$secret := .Values.secrets }}
+{{ $data := deepCopy (default dict $secret.stringData) }}
+{{ range $field := $secret.fields }}
+{{ if hasKey $data $field.key }}{{ fail "Secret field names must be unique" }}{{ end }}
+{{ $_ := set $data $field.key $field.value }}
+{{ end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ printf "%s-%s" $.Release.Name $key }}
+type: {{ default "Opaque" $secret.type }}
+stringData:
+{{ required (printf "Secret %s needs credential-bound stringData" $key) $data | toYaml | indent 2 }}
+{{ end }}

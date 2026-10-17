@@ -1,0 +1,125 @@
+# 名称默认使用 Release（AxiOps 默认为服务编码），Namespace 使用所选目标环境。
+service:
+  enabled: true
+  name: ""                     # Service 默认 <release>-svc，通常不需要填写
+  port: 28080                  # 容器、Service、Ingress 后端和探针的默认端口
+  replicas: 1
+  type: ClusterIP
+  annotations: {}
+image:
+  repository: example.invalid/team/java-service  # 发布时由 AxiOps 注入固定镜像
+  tag: latest
+  pullPolicy: IfNotPresent
+imagePullSecrets: []           # AxiOps 发布会准备私有仓库拉取凭据
+resources:
+  enabled: true
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {cpu: 500m, memory: 512Mi}
+
+application:
+  name: ""                     # 留空跟随 Release，不固定某个业务服务
+  profile: ""                  # 每个环境明确填写 test / prod 等；空值不注入
+  portEnv: SERVER_PORT          # Spring Boot；非 Spring 应用可清空，自己在 env 中设置
+  logLevel: ""                  # 非空时注入 LOG_LEVEL
+  timezone: Asia/Shanghai
+  podIP: true
+java:
+  enabled: true
+  # JVM 自动读取 JAVA_TOOL_OPTIONS，不依赖镜像入口脚本是否处理 JAVA_OPTS。
+  # 若现有入口要求 JAVA_OPTS，可改为 JAVA_OPTS，入口必须实际使用它。
+  optionsEnv: JAVA_TOOL_OPTIONS
+  opts: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=50.0
+    -XX:MaxMetaspaceSize=128m
+    -XX:+UseG1GC
+    -Dfile.encoding=UTF-8
+  # JDK 8 请使用支持容器/百分比参数的 8u191+（推荐受维护的较新版本）；
+  # JDK 由业务镜像决定，此 Chart 不负责切换基础镜像。
+  heapDump:
+    enabled: false
+    mountPath: /dump
+    existingClaim: ""           # 空值用 emptyDir，Pod 删除会丢失 dump
+    sizeLimit: 1Gi
+    exitOnOutOfMemory: true
+nacos:
+  enabled: false
+  serverAddr: ""
+  namespace: ""                # Nacos namespace ID，与 K8s Namespace 不同
+  group: DEFAULT_GROUP
+  configImport:
+    enabled: true
+    optional: true
+    dataId: ""                 # 默认 application.name / Release
+  fileExtension: yaml
+  refreshEnabled: true
+  auth:
+    enabled: false             # 关闭时完全不生成用户名/密码 env
+    secretName: ""            # 已存在的 Secret（目标 Namespace 内）
+    usernameKey: username
+    passwordKey: password
+skywalking:
+  enabled: false
+  # 已核对官方多架构镜像（linux/amd64、linux/arm64），固定 digest 便于精确回滚。
+  agentImage: apache/skywalking-java-agent:9.5.0-alpine@sha256:621a50951e2e9466de2b1ebcc18b63814b69d60db1492fc03337b94999a343ee
+  imagePullPolicy: IfNotPresent
+  backendService: ""           # 开启时必须填写 OAP 的 host:11800
+  serviceName: ""              # 默认 application.name / Release
+  excludedPlugins: ""          # 例如 asf-dubbo,dubbo
+  initResources:
+    requests: {cpu: 20m, memory: 32Mi}
+    limits: {cpu: 200m, memory: 128Mi}
+
+# 原生 Kubernetes 字段；支持 valueFrom / envFrom，密码、SK、webhook 使用 Secret。
+# 不能在这里重复定义自动生成的 JAVA_TOOL_OPTIONS、SERVER_PORT、Spring/Nacos 等变量。
+env: []
+envFrom: []
+command: []
+args: []
+probes:
+  enabled: false
+  type: tcp                    # tcp 不需要 HTTP path；http 才使用 path
+  port: 0                      # 0 跟随 service.port
+  path: /actuator/health
+  startup: {enabled: true, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 30}
+  readiness: {enabled: true, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 3}
+  liveness: {enabled: false, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3}
+monitoring:
+  enabled: false
+  path: /actuator/prometheus
+  port: 0                      # 0 跟随 service.port，应用需实际提供采集端点
+extraAnnotations: {}           # Pod 注解，可填写现有 prometheus.io/jvm/jvmpath 等
+podLabels: {}
+deployment:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+terminationGracePeriodSeconds: 30
+serviceAccountName: ""
+automountServiceAccountToken: false
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+initContainers: []
+sidecars: []
+volumes: []
+volumeMounts: []
+
+ingress:
+  enabled: false
+  items: []
+  # - name: root
+  #   className: alb           # nginx / 自定义 IngressClass 同样支持
+  #   labels: {ingress-controller: alb}
+  #   annotations: {alb.ingress.kubernetes.io/group.name: rsc01}
+  #   hosts:
+  #     - host: test-api.example.com  # 空 host 为 catch-all；TLS 必须填写域名
+  #       paths: [{path: /, pathType: Prefix}]
+  #   tls: {enabled: false, hosts: [], secretName: ""}
+  # TLS hosts 留空时取上面规则域名；ALB 可不指定 Secret，证书由 ALB 管理。
+  # Nginx TLS 需填写目标 Namespace 已存在的 TLS Secret。

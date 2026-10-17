@@ -1,0 +1,152 @@
+// 后端 API 更新示例
+// Go 语言示例代码
+
+// 1. 更新项目模型结构体
+// 文件: internal/cicd/project/model.go (或类似位置)
+
+type Project struct {
+    ID                   int64     `json:"id"`
+    Name                 string    `json:"name"`
+    Code                 string    `json:"code"`
+    Description          string    `json:"description"`
+    Status               string    `json:"status"`
+    DeliveryType         string    `json:"delivery_type"`
+    DeliveryStatus       string    `json:"delivery_status"`
+    OwnerUserID          int64     `json:"owner_user_id"`
+    InitializationStatus string    `json:"initialization_status"` // 新增
+    InitializationStep   int       `json:"initialization_step"`   // 新增
+    InitializedAt        *time.Time `json:"initialized_at"`       // 新增
+    CreatedAt            time.Time `json:"created_at"`
+    UpdatedAt            time.Time `json:"updated_at"`
+}
+
+// 2. 创建项目时设置初始状态
+// 文件: internal/cicd/project/service.go
+
+func (s *Service) CreateProject(ctx context.Context, input CreateProjectInput) (*Project, error) {
+    project := &Project{
+        Name:                 input.Name,
+        Code:                 input.Code,
+        Description:          input.Description,
+        DeliveryType:         input.DeliveryType,
+        Status:               "active",
+        InitializationStatus: "pending",      // 设置为待初始化
+        InitializationStep:   0,              // 步骤为0
+        CreatedAt:            time.Now(),
+        UpdatedAt:            time.Now(),
+    }
+    
+    id, err := s.repo.Create(ctx, project)
+    if err != nil {
+        return nil, err
+    }
+    
+    project.ID = id
+    return project, nil
+}
+
+// 3. 更新项目接口
+type UpdateProjectInput struct {
+    Name                 *string    `json:"name,omitempty"`
+    Description          *string    `json:"description,omitempty"`
+    Status               *string    `json:"status,omitempty"`
+    InitializationStatus *string    `json:"initialization_status,omitempty"` // 新增
+    InitializationStep   *int       `json:"initialization_step,omitempty"`   // 新增
+}
+
+func (s *Service) UpdateProject(ctx context.Context, id int64, input UpdateProjectInput) error {
+    updates := make(map[string]interface{})
+    
+    if input.Name != nil {
+        updates["name"] = *input.Name
+    }
+    if input.Description != nil {
+        updates["description"] = *input.Description
+    }
+    if input.InitializationStatus != nil {
+        updates["initialization_status"] = *input.InitializationStatus
+        // 如果标记为已完成，设置完成时间
+        if *input.InitializationStatus == "completed" {
+            now := time.Now()
+            updates["initialized_at"] = now
+        }
+    }
+    if input.InitializationStep != nil {
+        updates["initialization_step"] = *input.InitializationStep
+    }
+    
+    updates["updated_at"] = time.Now()
+    
+    return s.repo.Update(ctx, id, updates)
+}
+
+// 4. 数据库查询更新
+// 文件: internal/cicd/project/repository.go
+
+func (r *Repository) FindByID(ctx context.Context, id int64) (*Project, error) {
+    var project Project
+    err := r.db.QueryRowContext(ctx, `
+        SELECT id, name, code, description, status, delivery_type, delivery_status, 
+               owner_user_id, initialization_status, initialization_step, initialized_at,
+               created_at, updated_at
+        FROM project 
+        WHERE id = ?
+    `, id).Scan(
+        &project.ID, &project.Name, &project.Code, &project.Description,
+        &project.Status, &project.DeliveryType, &project.DeliveryStatus,
+        &project.OwnerUserID, &project.InitializationStatus, &project.InitializationStep,
+        &project.InitializedAt, &project.CreatedAt, &project.UpdatedAt,
+    )
+    
+    if err == sql.ErrNoRows {
+        return nil, nil
+    }
+    return &project, err
+}
+
+// 5. HTTP 处理器
+// 文件: internal/cicd/project/handler.go
+
+// PATCH /api/v1/projects/:id
+func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
+    projectID := extractProjectID(r)
+    
+    var input UpdateProjectInput
+    if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+        response.Error(w, http.StatusBadRequest, "invalid input")
+        return
+    }
+    
+    // 权限检查
+    if !h.authz.Can(r.Context(), "project", "update", projectID) {
+        response.Error(w, http.StatusForbidden, "permission denied")
+        return
+    }
+    
+    // 更新项目
+    if err := h.service.UpdateProject(r.Context(), projectID, input); err != nil {
+        response.Error(w, http.StatusInternalServerError, err.Error())
+        return
+    }
+    
+    response.Success(w, nil)
+}
+
+// 6. 数据库迁移执行
+// 在服务启动前或通过迁移命令执行：
+// go run cmd/migrate/main.go up
+
+// 或者手动执行 SQL：
+/*
+ALTER TABLE project 
+ADD COLUMN initialization_status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '初始化状态',
+ADD COLUMN initialization_step INT NOT NULL DEFAULT 0 COMMENT '初始化步骤',
+ADD COLUMN initialized_at DATETIME NULL COMMENT '完成初始化时间';
+
+-- 将现有项目标记为已完成
+UPDATE project 
+SET initialization_status = 'completed', 
+    initialization_step = 4, 
+    initialized_at = updated_at 
+WHERE id > 0;
+*/

@@ -1,0 +1,123 @@
+/**
+ * CI/CD 统一区块规范
+ *
+ * 概览 / Job / 运行详情三处共用同一套卡片语言，避免各页面各写一份：
+ *   白底卡片 + 1px 边框 + 极淡阴影；标题条左侧 3px teal 强调条；
+ *   所有编号与数值走等宽字体；次要说明统一 11px 等宽灰字；
+ *   次级 tab 条与顶部项目导航共用 teal 强调色。
+ */
+
+$cicd-accent: #0f766e;
+$cicd-line: #e2e8f0;
+$cicd-line-soft: #eef2f7;
+$cicd-radius: 8px;
+
+// 区块卡片
+@mixin cicd-block {
+  overflow: hidden;
+  border: 1px solid $cicd-line;
+  border-radius: $cicd-radius;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+}
+
+// 区块标题条：左侧 teal 强调条 + 标题 + 等宽说明，右侧放操作
+@mixin cicd-block-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px 11px 19px;
+  border-bottom: 1px solid $cicd-line-soft;
+
+  &::before {
+    position: absolute;
+    top: 50%;
+    left: 9px;
+    width: 3px;
+    height: 13px;
+    margin-top: -6px;
+    border-radius: 2px;
+    background: $cicd-accent;
+    content: '';
+  }
+
+  > strong {
+    flex: none;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  > span {
+    overflow: hidden;
+    color: #94a3b8;
+    font: 11px var(--ax-font-mono);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// 指标列：上数值（等宽）下标签，右对齐
+@mixin cicd-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 64px;
+  text-align: right;
+
+  small {
+    color: #94a3b8;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  b,
+  strong {
+    overflow: hidden;
+    color: #334155;
+    font-family: var(--ax-font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// 次级 tab 条：与顶部项目导航同一 teal 强调色
+@mixin cicd-tabs {
+  display: flex;
+  gap: 24px;
+  padding: 0 16px;
+  border-bottom: 1px solid $cicd-line;
+
+  button {
+    padding: 9px 2px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: #64748b;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    color: $cicd-accent;
+  }
+
+  button.active,
+  button.is-active {
+    border-bottom-color: $cicd-accent;
+    color: $cicd-accent;
+    font-weight: 600;
+  }
+}
+
+// 列表表头行
+@mixin cicd-table-head {
+  background: #f8fafc;
+  color: #64748b;
+  font: 11px var(--ax-font-mono);
+}

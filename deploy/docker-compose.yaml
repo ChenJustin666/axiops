@@ -1,0 +1,127 @@
+# AxiOps Docker Compose - 开发/部署标准
+# 服务命名规范：axiops-<module>
+# 端口规范：
+#   axiops-platform-api: 8090
+#   axiops-cicd-api:     8091
+#   axiops-monitor-api:  8092
+#   axiops-web:          3000 (nginx 反代后统一 80/443)
+
+version: '3.8'
+
+services:
+  # ===================== 基础设施 =====================
+  axiops-mysql:
+    image: mysql:8.0
+    container_name: axiops-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-axiops2024}
+      MYSQL_DATABASE: axiops
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - axiops-mysql-data:/var/lib/mysql
+      - ../migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - axiops-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  axiops-redis:
+    image: redis:7-alpine
+    container_name: axiops-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - axiops-redis-data:/data
+    networks:
+      - axiops-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===================== 后端服务 =====================
+  axiops-platform-api:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.platform-api
+    container_name: axiops-platform-api
+    ports:
+      - "8090:8090"
+    environment:
+      - AXIOPS_MYSQL_HOST=axiops-mysql
+      - AXIOPS_MYSQL_PORT=3306
+      - AXIOPS_MYSQL_USER=root
+      - AXIOPS_MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD:-axiops2024}
+      - AXIOPS_MYSQL_DB=axiops
+    volumes:
+      - ./configs:/app/configs
+    depends_on:
+      axiops-mysql:
+        condition: service_healthy
+    networks:
+      - axiops-net
+    restart: unless-stopped
+
+  axiops-cicd-api:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.cicd-api
+    container_name: axiops-cicd-api
+    ports:
+      - "8091:8091"
+    environment:
+      - AXIOPS_MYSQL_HOST=axiops-mysql
+      - AXIOPS_MYSQL_PORT=3306
+      - AXIOPS_MYSQL_USER=root
+      - AXIOPS_MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD:-axiops2024}
+      - AXIOPS_MYSQL_DB=axiops
+    volumes:
+      - ./configs:/app/configs
+    depends_on:
+      axiops-mysql:
+        condition: service_healthy
+    networks:
+      - axiops-net
+    restart: unless-stopped
+
+  # axiops-monitor-api:
+  #   build:
+  #     context: .
+  #     dockerfile: deploy/docker/Dockerfile.monitor-api
+  #   container_name: axiops-monitor-api
+  #   ports:
+  #     - "8092:8092"
+  #   networks:
+  #     - axiops-net
+  #   restart: unless-stopped
+
+  # ===================== 前端 =====================
+  axiops-web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: axiops-web
+    ports:
+      - "3000:80"
+    environment:
+      - AXIOPS_API_BASE_URL=http://axiops-platform-api:8090
+    depends_on:
+      - axiops-platform-api
+    networks:
+      - axiops-net
+    restart: unless-stopped
+
+volumes:
+  axiops-mysql-data:
+  axiops-redis-data:
+
+networks:
+  axiops-net:
+    driver: bridge

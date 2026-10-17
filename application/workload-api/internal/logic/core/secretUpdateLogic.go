@@ -1,0 +1,146 @@
+package core
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/ChenJustin666/axiops/application/manager-rpc/client/managerservice"
+	"github.com/ChenJustin666/axiops/application/workload-api/internal/svc"
+	"github.com/ChenJustin666/axiops/application/workload-api/internal/types"
+	"github.com/ChenJustin666/axiops/common/utils"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
+
+	"github.com/zeromicro/go-zero/core/logx"
+)
+
+type SecretUpdateLogic struct {
+	logx.Logger
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+}
+
+// 更新 Secret
+func NewSecretUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SecretUpdateLogic {
+	return &SecretUpdateLogic{
+		Logger: logx.WithContext(ctx),
+		ctx:    ctx,
+		svcCtx: svcCtx,
+	}
+}
+
+func (l *SecretUpdateLogic) SecretUpdate(req *types.SecretRequest) (resp string, err error) {
+	username, ok := l.ctx.Value("username").(string)
+	if !ok {
+		username = "system"
+	}
+
+	workloadInfo, err := l.svcCtx.ManagerRpc.ProjectWorkspaceGetById(l.ctx, &managerservice.GetOnecProjectWorkspaceByIdReq{Id: req.WorkloadId})
+	if err != nil {
+		l.Errorf("获取项目工作空间详情失败: %v", err)
+		return "", fmt.Errorf("获取项目工作空间详情失败")
+	}
+
+	client, err := l.svcCtx.K8sManager.GetCluster(l.ctx, workloadInfo.Data.ClusterUuid)
+	if err != nil {
+		l.Errorf("获取集群客户端失败: %v", err)
+		return "", fmt.Errorf("获取集群客户端失败")
+	}
+
+	secretClient := client.Secrets()
+
+	// 获取现有 Secret 用于对比
+	existingSecret, err := secretClient.Get(workloadInfo.Data.Namespace, req.Name)
+	if err != nil {
+		l.Errorf("获取现有 Secret 失败: %v", err)
+		return "", fmt.Errorf("获取现有 Secret 失败")
+	}
+
+	var secret corev1.Secret
+	err = yaml.Unmarshal([]byte(req.SecretYamlStr), &secret)
+	if err != nil {
+		l.Errorf("解析 Secret YAML 失败: %v", err)
+		return "", fmt.Errorf("解析 Secret YAML 失败")
+	}
+
+	// 设置命名空间
+	if secret.Namespace == "" {
+		secret.Namespace = workloadInfo.Data.Namespace
+	}
+
+	// 对比 Data 变更
+	dataDiff := CompareByteMaps(existingSecret.Data, secret.Data)
+	dataChangeDetail := BuildMapDiffDetail(dataDiff, AuditDetailConfig.RecordSecretValues)
+
+	// 对比 Labels 变更
+	labelsDiff := CompareStringMaps(existingSecret.Labels, secret.Labels)
+	labelsChangeDetail := BuildMapDiffDetail(labelsDiff, false)
+
+	// 对比 Annotations 变更
+	annotationsDiff := CompareStringMaps(existingSecret.Annotations, secret.Annotations)
+	annotationsChangeDetail := BuildMapDiffDetail(annotationsDiff, false)
+
+	// 构建变更详情
+	var changeDetails []string
+	if HasMapChanges(dataDiff) {
+		changeDetails = append(changeDetails, fmt.Sprintf("Data变更: %s", dataChangeDetail))
+	}
+	if HasMapChanges(labelsDiff) {
+		changeDetails = append(changeDetails, fmt.Sprintf("Labels变更: %s", labelsChangeDetail))
+	}
+	if HasMapChanges(annotationsDiff) {
+		changeDetails = append(changeDetails, fmt.Sprintf("Annotations变更: %s", annotationsChangeDetail))
+	}
+
+	changeDetailStr := "无变更"
+	if len(changeDetails) > 0 {
+		changeDetailStr = strings.Join(changeDetails, "; ")
+	}
+
+	// 获取项目详情
+	projectDetail, err := l.svcCtx.ManagerRpc.GetClusterNsDetail(l.ctx, &managerservice.GetClusterNsDetailReq{
+		ClusterUuid: workloadInfo.Data.ClusterUuid,
+		Namespace:   workloadInfo.Data.Namespace,
+	})
+	if err != nil {
+		l.Errorf("获取项目详情失败: %v", err)
+		return "", fmt.Errorf("获取项目详情失败")
+	} else {
+		// 注入注解
+		utils.AddAnnotations(&secret.ObjectMeta, &utils.AnnotationsInfo{
+			ServiceName:   secret.Name,
+			ProjectName:   projectDetail.ProjectNameCn,
+			WorkspaceName: projectDetail.WorkspaceNameCn,
+			ProjectUuid:   projectDetail.ProjectUuid,
+		})
+	}
+
+	// 更新 Secret
+	_, updateErr := secretClient.Update(&secret)
+	if updateErr != nil {
+		l.Errorf("更新 Secret 失败: %v", updateErr)
+		// 记录失败的审计日志
+		_, _ = l.svcCtx.ManagerRpc.ProjectAuditLogAdd(l.ctx, &managerservice.AddOnecProjectAuditLogReq{
+			WorkspaceId:  req.WorkloadId,
+			Title:        "更新 Secret",
+			ActionDetail: fmt.Sprintf("用户 %s 在命名空间 %s 更新 Secret %s 失败, 类型: %s, 错误原因: %v, 变更内容: %s", username, secret.Namespace, secret.Name, secret.Type, updateErr, changeDetailStr),
+			Status:       0,
+		})
+		return "", fmt.Errorf("更新 Secret 失败")
+	}
+
+	// 记录成功的审计日志
+	_, auditErr := l.svcCtx.ManagerRpc.ProjectAuditLogAdd(l.ctx, &managerservice.AddOnecProjectAuditLogReq{
+		WorkspaceId:  req.WorkloadId,
+		Title:        "更新 Secret",
+		ActionDetail: fmt.Sprintf("用户 %s 在命名空间 %s 成功更新 Secret %s, 类型: %s, %s", username, secret.Namespace, secret.Name, secret.Type, changeDetailStr),
+		Status:       1,
+	})
+	if auditErr != nil {
+		l.Errorf("记录审计日志失败: %v", auditErr)
+	}
+
+	l.Infof("成功更新 Secret: %s", secret.Name)
+	return "更新成功", nil
+}

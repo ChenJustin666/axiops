@@ -1,0 +1,15 @@
+# 生产环境独立填写。空 Nacos 地址是刻意保留的必填项，未填时校验失败。
+# 不把测试的 Nacos、域名或 Secret 默认复制到生产。
+service: {port: 28080, replicas: 2}
+resources:
+  requests: {cpu: 500m, memory: 1Gi}
+  limits: {cpu: "2", memory: 2Gi}
+application: {profile: prod, logLevel: info}
+nacos:
+  enabled: true
+  serverAddr: ""                 # 填写生产 Nacos host:port
+  namespace: ""                  # 填写生产 namespace ID；public 本身可留空
+  auth: {enabled: false}         # 按生产 Nacos 认证要求开启，并选择生产 Secret
+skywalking: {enabled: false}     # 开启时填写生产 OAP 地址
+probes: {enabled: true, type: tcp}
+ingress: {enabled: false, items: []}  # 需要域名时按实际生产域名配置

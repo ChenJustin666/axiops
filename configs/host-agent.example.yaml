@@ -1,0 +1,11 @@
+# AxiOps host Agent. Supply the one-time token only on first registration.
+ServerURL: https://axiops.example.com
+RegistrationToken: "REPLACE_ME"
+AgentTokenFile: ./data/agent.token
+AssetRef: host-asset-id
+Name: hostname
+WorkDir: ./data
+CACertFile: ""
+AllowInsecureHTTP: false
+PollIntervalSeconds: 5
+MaxArtifactBytes: 2147483648

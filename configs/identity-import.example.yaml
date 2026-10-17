@@ -1,0 +1,23 @@
+# Use least-privilege accounts. Legacy requires SELECT. Target requires SELECT
+# plus INSERT on identity_link only when --apply is used.
+Legacy:
+  Host: legacy-mysql.example.internal
+  Port: 3306
+  User: readonly_user
+  Password: "REPLACE_ME"
+  Database: autoops
+  Charset: utf8mb4
+  MaxIdle: 2
+  MaxOpen: 2
+
+Target:
+  Host: axiops-mysql.example.internal
+  Port: 3306
+  User: identity_importer
+  Password: "REPLACE_ME"
+  Database: axiops
+  Charset: utf8mb4
+  MaxIdle: 2
+  MaxOpen: 2
+
+Provider: legacy_autoops

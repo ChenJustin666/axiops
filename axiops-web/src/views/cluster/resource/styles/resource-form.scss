@@ -1,0 +1,165 @@
+/**
+ * 集群资源表单统一样式变量
+ * 符合项目 B-End 设计规范
+ */
+
+// 圆角标准
+$radius-sm: 2px; // 按钮、标签
+$radius-md: 4px; // 容器、卡片
+
+// 间距标准
+$spacing-xs: 8px;
+$spacing-sm: 12px;
+$spacing-md: 16px;
+$spacing-lg: 20px;
+
+// 阴影标准
+$shadow-sm: 0px 0px 4px 0px rgba(0, 0, 0, 0.04);
+
+// 表单区块混合器
+@mixin form-section {
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  background: #fff;
+  border-radius: $radius-md;
+  border: 1px solid var(--art-card-border, #e4e7ed);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// 对话框工具栏混合器
+@mixin dialog-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  padding: 10px $spacing-sm;
+  background: #f5f7fa;
+  border-radius: $radius-md;
+}
+
+// 帮助弹窗混合器
+@mixin help-popover {
+  h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  .help-content {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #606266;
+
+    p {
+      margin: 0 0 6px;
+
+      strong {
+        color: #409eff;
+        font-weight: 600;
+      }
+    }
+
+    ul {
+      margin: 4px 0 10px;
+      padding-left: 20px;
+
+      li {
+        margin-bottom: 3px;
+
+        strong {
+          color: #409eff;
+        }
+      }
+    }
+  }
+}
+
+// 表单容器混合器
+@mixin form-container {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 3px;
+
+    &:hover {
+      background: #c0c4cc;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f5f7fa;
+  }
+}
+
+// YAML 容器混合器
+@mixin yaml-container {
+  border-radius: $radius-md;
+  overflow: hidden;
+  border: 1px solid #e4e7ed;
+}
+
+// 对话框底部混合器
+@mixin dialog-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+// 单选按钮卡片样式混合器（移除 AI 风格）
+@mixin radio-button-clean {
+  :deep(.el-radio-button) {
+    .el-radio-button__inner {
+      border-radius: $radius-md !important;
+      border: 1px solid var(--default-border, #dcdfe6) !important;
+      background: #fff;
+      box-shadow: none;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: #409eff !important;
+      }
+    }
+
+    &.is-active .el-radio-button__inner {
+      background: #409eff !important; // 纯色，移除渐变
+      border-color: #409eff !important;
+      box-shadow: $shadow-sm;
+    }
+  }
+}
+
+// 表单项提示文本混合器
+@mixin form-item-tip {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.4;
+
+  &.warning {
+    color: #e6a23c;
+  }
+}
+
+// 区块头部混合器
+@mixin section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: $spacing-sm;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e4e7ed;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}

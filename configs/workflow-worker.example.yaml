@@ -1,0 +1,61 @@
+# AxiOps workflow worker. Inject secrets through the deployment environment.
+Name: axiops-workflow-worker
+
+# Local development reuses the already verified Platform API database.
+# Production deployments may remove this line and provide the MySQL block below.
+DatabaseConfigFile: configs/platform-api.yaml
+
+MySQL:
+  Host: 127.0.0.1
+  Port: 3306
+  User: axiops
+  Password: "REPLACE_ME"
+  Database: axiops
+  Charset: utf8mb4
+  MaxOpen: 30
+  MaxIdle: 10
+
+CredentialEncryptionKey: ""
+
+Worker:
+  ID: ""
+  PollIntervalMS: 2000
+  LeaseSeconds: 120
+  BatchSize: 20
+
+Kubernetes:
+  FieldManager: axiops-cicd
+  ForceApply: false
+  QPS: 20
+  Burst: 40
+  TimeoutSeconds: 30
+  ClientCacheSecs: 60
+
+Build:
+  Enabled: false
+  ClusterID: 0
+  Namespace: axiops-cicd
+  PollIntervalMS: 1000
+  MaxAttempts: 3
+  RetryAfterSecs: 5
+  StaleAfterSecs: 300
+  # Configure once. ClusterID is the CI cluster ID from Cluster Management,
+  # never the project's deployment environment cluster.
+  Defaults:
+    TimeoutSeconds: 1800
+    # Empty resources impose no AxiOps CPU/memory requests or limits.
+    ResourceCPU: ""
+    ResourceMemory: ""
+    BuilderImage: ""
+    # Standard builder entrypoint: builds the repository Dockerfile with
+    # BuildKit, pushes the image, and writes the digest result contract.
+    BuildCommand: "exec /usr/local/bin/entrypoint.sh"
+    CachePVCName: ""
+    CacheDir: /workspace/.axiops-cache
+    JobRetentionSeconds: 0
+
+Notification:
+  Enabled: true
+  PollIntervalMS: 2000
+  MaxAttempts: 5
+  LeaseSeconds: 60

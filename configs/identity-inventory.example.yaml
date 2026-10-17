@@ -1,0 +1,23 @@
+# Read-only identity migration inventory. Do not put credentials in this file.
+Legacy:
+  Host: legacy-mysql.example.internal
+  Port: 3306
+  User: readonly_user
+  Password: "REPLACE_ME"
+  Database: autoops
+  Charset: utf8mb4
+  MaxIdle: 2
+  MaxOpen: 2
+
+Target:
+  Host: axiops-mysql.example.internal
+  Port: 3306
+  User: readonly_user
+  Password: "REPLACE_ME"
+  Database: axiops
+  Charset: utf8mb4
+  MaxIdle: 2
+  MaxOpen: 2
+
+Provider: legacy_autoops
+Limit: 100

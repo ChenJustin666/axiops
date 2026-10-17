@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="AxiOps">
+  <defs>
+    <linearGradient id="tile" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A47C2"/><stop offset="52%" stop-color="#1D84FF"/><stop offset="100%" stop-color="#3FC6FF"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="24%" cy="10%" r="88%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#tile)"/>
+  <rect width="512" height="512" rx="116" fill="url(#shine)"/>
+  <g transform="translate(72.04,72.04) scale(2.87439)">
+    <circle cx="64" cy="64" r="57" fill="none" stroke="#ffffff" stroke-width="2.4" opacity="0.4"/>
+  <path d="M11.07 39.32 A58.4 58.4 0 0 1 82.05 8.46 L81.18 11.12 A55.6 55.6 0 0 0 24.68 24.68 Z" fill="#ffffff"/>
+  <g fill="none" stroke="#ffffff" stroke-width="15" stroke-linecap="round" stroke-linejoin="miter">
+    <path d="M33.14 100.77 L58 21 L70 21 L94.86 100.77"/>
+    <path d="M41.92 72.6 L86.08 72.6"/>
+  </g>
+  <circle cx="81.6" cy="9.8" r="11" fill="#ffffff" opacity="0.16"/>
+  <circle cx="81.6" cy="9.8" r="5.2" fill="#ffffff"/>
+  </g>
+</svg>

@@ -1,0 +1,44 @@
+@charset "UTF-8";
+
+/*滚动条*/
+/*滚动条整体部分,必须要设置*/
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 0 !important;
+}
+
+/*滚动条的轨道*/
+/*高端化：轨道透明 + 胶囊滑块（透明边框让滑块视觉宽度约 4px，hover 加深）*/
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/*滚动条的滑块按钮*/
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: var(--art-gray-400) !important;
+  background-clip: padding-box;
+  transition: background-color 0.2s;
+  -webkit-transition: background-color 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--art-gray-500) !important;
+}
+
+/*滚动条的上下两端的按钮*/
+::-webkit-scrollbar-button {
+  height: 0px;
+  width: 0;
+}
+
+.dark {
+  ::-webkit-scrollbar-track {
+    background-color: var(--default-bg-color);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--art-gray-300) !important;
+  }
+}

@@ -1,0 +1,144 @@
+// =====================================================================
+// AxiOps 排版系统（Typography）
+// 依赖 core/fonts.scss 中的自托管字体。
+//   界面正文        → Inter       （中文自动回退系统 CJK：苹方 / 微软雅黑 / Noto）
+//   品牌 / 标题 / 大数字 → Sora
+//   代码 / YAML / 日志   → JetBrains Mono
+//
+// 设计原则：
+//   1. 只调整「字体族 / 渲染质量 / 数字对齐」，不改动任何字号与尺寸，
+//      因此不会影响既有布局与功能。
+//   2. Element Plus 组件不显式声明字体（仅 font-family: inherit），
+//      统一 html/body 即可让全站组件自动继承，无需逐个覆盖。
+//   3. 中文不使用负字距，避免笔画拥挤；字距仅用于拉丁显示字（.ax-display）。
+// =====================================================================
+
+:root {
+  // -------------------- 字体族 --------------------
+  // Inter 仅覆盖拉丁与数字；中文由后面的 CJK 字体接管
+  --ax-font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Source Han Sans SC',
+    'Noto Sans CJK SC', 'WenQuanYi Micro Hei', sans-serif;
+
+  // 品牌显示字：Sora 负责拉丁与数字，中文回退到 sans 栈
+  --ax-font-display: 'Sora', var(--ax-font-sans);
+
+  // 代码字：JetBrains Mono 优先，保留原有系统等宽字体作为回退
+  --ax-font-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+
+  // -------------------- 字号阶梯（15px 基准，2026-10-11 全站提升）--------------------
+  // 旧版 14px 基准整体偏小（用户反馈「有些字体有点小」），此处统一重定基：
+  // 正文/按钮/输入框/表格 = 15px（--el-font-size-base），小字（标签/分页）= 13px，
+  // 表单标签保持 14px（EP 在 .el-form-item--default 上写死 --font-size:14px），
+  // 天然形成「标签弱一档、值强一档」的层级，且不会撑爆固定 label-width。
+  --ax-text-xs: 12px;
+  --ax-text-sm: 14px;
+  --ax-text-base: 15px;
+  --ax-text-md: 16px;
+  --ax-text-lg: 17px;
+  --ax-text-xl: 19px;
+  --ax-text-2xl: 23px;
+  --ax-text-3xl: 29px;
+  --ax-text-4xl: 36px;
+
+  // 语义字号：页面标题（26px + Sora 600，旗舰级页面标识）
+  --ax-text-page-title: 26px;
+
+  // -------------------- Element Plus 字号变量（全站生效）--------------------
+  // 沿用 el-ui.scss 的 :root + !important 模式：EP 按需注入顺序不确定，
+  // !important 可确保无论注入先后都生效（EP 自身定义均为非 important）。
+  // 按钮 / 输入框 / 表格正文 / 下拉项 / 描述 / 标签页文字 全部 14 → 15。
+  --el-font-size-base: 15px !important;
+  // 分页、消息框辅助文字等 small 档 12 → 13（12px 作为全站可读性下限保留给 xs 档）。
+  --el-font-size-small: 13px !important;
+
+  // -------------------- 行高 --------------------
+  --ax-leading-tight: 1.25;
+  --ax-leading-snug: 1.45;
+  --ax-leading-normal: 1.6;
+  --ax-leading-relaxed: 1.75;
+
+  // -------------------- 字距（仅用于拉丁显示字）--------------------
+  --ax-tracking-tight: -0.01em;
+  --ax-tracking-normal: 0;
+  --ax-tracking-caps: 0.06em; // 全大写小标签
+
+  // -------------------- 与 Element Plus 对齐 --------------------
+  // EP 的 --el-font-family 默认是 Helvetica/PingFang，这里统一为品牌字体栈
+  --el-font-family: var(--ax-font-sans);
+}
+
+// ---------------------------------------------------------------------
+// 全局基准字体
+// ---------------------------------------------------------------------
+html,
+body {
+  font-family: var(--ax-font-sans);
+  line-height: var(--ax-leading-normal); // 1.6：15px 正文 × 1.6 = 24px 行盒，长段落明显更易读
+}
+
+html {
+  // 字体渲染更锐利（macOS 上显著；Windows 无副作用）
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+// ---------------------------------------------------------------------
+// 标题：拉丁与数字使用品牌字 Sora，中文自动回退（观感不变）
+// ---------------------------------------------------------------------
+h1,
+h2,
+h3 {
+  font-family: var(--ax-font-display);
+}
+
+// ---------------------------------------------------------------------
+// 代码 / 配置 / 日志
+// ---------------------------------------------------------------------
+code,
+kbd,
+samp,
+pre,
+tt {
+  font-family: var(--ax-font-mono);
+}
+
+// ---------------------------------------------------------------------
+// 数字对齐：数据密集场景使用等宽数字，列与列之间位数对齐更易读
+// ---------------------------------------------------------------------
+.el-table,
+.el-table__body,
+.el-descriptions__cell,
+.el-statistic__content,
+.el-pagination {
+  font-variant-numeric: tabular-nums;
+}
+
+// ---------------------------------------------------------------------
+// 文本选中：品牌色
+// ---------------------------------------------------------------------
+::selection {
+  color: #fff;
+  background: var(--ax-blue-deep);
+}
+
+// ---------------------------------------------------------------------
+// 工具类（供新页面/品牌区块按需使用）
+// ---------------------------------------------------------------------
+.ax-display {
+  font-family: var(--ax-font-display);
+  letter-spacing: var(--ax-tracking-tight);
+}
+
+.ax-mono {
+  font-family: var(--ax-font-mono);
+}
+
+.ax-tnum {
+  font-variant-numeric: tabular-nums;
+}

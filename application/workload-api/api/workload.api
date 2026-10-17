@@ -1,0 +1,1430 @@
+syntax = "v1"
+
+info(
+    title: "Cluster workload-api API"
+    desc: "工作负载常用操作"
+    author: "Yan Shicheng"
+    email: "ikubeops@gmail.com"
+    version: "1.0"
+)
+
+import "./base.api"
+
+type (
+    ReplicasResourceRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Replicas int32 `json:"replicas" validate:"required"`
+    }
+
+    ContainerInfo {
+        Name string `json:"name"`
+        Image string `json:"image"`
+    }
+
+    ContainerInfoList {
+        InitContainers []ContainerInfo `json:"initContainers"`
+        Containers []ContainerInfo `json:"containers"`
+        EphemeralContainers []ContainerInfo `json:"ephemeralContainers,optional"`
+    }
+
+        // 更新资源镜像
+    UpdateImageRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        ContainerName string `json:"containerName" validate:"required"`
+        ContainerType string `json:"containerType,optional"`
+        Image string `json:"image" validate:"required"`
+        Reason string `json:"reason,optional" `
+    }
+
+        // K8s 原生版本历史（Deployment 专用）
+    RevisionInfo {
+        Revision int64 `json:"revision"`
+        CreationTimestamp int64 `json:"creationTimestamp"`
+        Images []string `json:"images"`
+        Replicas int32 `json:"replicas"`
+        Reason string `json:"reason"`
+    }
+
+        // 配置历史记录（StatefulSet/DaemonSet 使用）
+    ConfigHistoryInfo {
+        Id uint64 `json:"id"`
+        Revision int32 `json:"revision"`
+        Images []string `json:"images"`
+        CreatedAt int64 `json:"createdAt"`
+        UpdatedBy string `json:"updatedBy"`
+        Reason string `json:"reason"`
+        SpecPreview string `json:"specPreview"`
+        IsCurrent bool `json:"isCurrent"`
+    }
+
+    InjectEphemeralContainerRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        PodName string `json:"podName" validate:"required"`
+        ContainerName string `json:"containerName,optional" validate:"-"`
+        Image string `json:"image" validate:"-"`
+        Command []string `json:"command" validate:"-"`
+        Args []string `json:"args" validate:"-"`
+    }
+
+    PodResourceList {
+        Name string `json:"name"`
+        Namespace string `json:"namespace"`
+        Status string `json:"status"`
+        Ready string `json:"ready"`
+        Restarts int32 `json:"restarts"`
+        Age string `json:"age"`
+        Node string `json:"node"`
+        PodIP string `json:"podIP"`
+        Labels map[string]string `json:"labels"`
+        CreationTime int64 `json:"creationTime"`
+        Containers ContainerInfoList `json:"containers"`
+    }
+
+        // ==================== 滚动更新策略相关 ====================
+
+    RollingUpdateConfig {
+        MaxUnavailable string `json:"maxUnavailable,optional"`
+        MaxSurge string `json:"maxSurge,optional"`
+        Partition int32 `json:"partition,optional"`
+    }
+
+    UpdateStrategyResponse {
+        Type string `json:"type"`
+        RollingUpdate *RollingUpdateConfig `json:"rollingUpdate,optional"`
+    }
+
+    UpdateStrategyRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Type string `json:"type" validate:"required,oneof=RollingUpdate Recreate OnDelete"`
+        RollingUpdate *RollingUpdateConfig `json:"rollingUpdate,optional"`
+    }
+
+        // ==================== 回滚相关 ====================
+
+    RollbackToRevisionRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Revision int64 `json:"revision" validate:"required,min=1"`
+    }
+
+    RollbackToConfigRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        ConfigHistoryId uint64 `json:"configHistoryId" validate:"required,min=1"`
+    }
+
+        // ==================== 环境变量相关 ====================
+
+    EnvVarSource {
+        Type string `json:"type"`
+        Value string `json:"value,optional"`
+        ConfigMapKeyRef *ConfigMapKeySelector `json:"configMapKeyRef,optional"`
+        SecretKeyRef *SecretKeySelector `json:"secretKeyRef,optional"`
+        FieldRef *ObjectFieldSelector `json:"fieldRef,optional"`
+        ResourceFieldRef *ResourceFieldSelector `json:"resourceFieldRef,optional"`
+    }
+
+    ConfigMapKeySelector {
+        Name string `json:"name"`
+        Key string `json:"key"`
+        Optional bool `json:"optional,optional"`
+    }
+
+    SecretKeySelector {
+        Name string `json:"name"`
+        Key string `json:"key"`
+        Optional bool `json:"optional,optional"`
+    }
+
+    ObjectFieldSelector {
+        FieldPath string `json:"fieldPath"`
+    }
+
+    ResourceFieldSelector {
+        ContainerName string `json:"containerName,optional"`
+        Resource string `json:"resource"`
+        Divisor string `json:"divisor,optional"`
+    }
+
+    EnvVar {
+        Name string `json:"name"`
+        Source EnvVarSource `json:"source"`
+    }
+
+    ContainerEnvVars {
+        ContainerName string `json:"containerName"`
+        ContainerType string `json:"containerType"`
+        Env []EnvVar `json:"env"`
+    }
+
+    EnvVarsResponse {
+        Containers []ContainerEnvVars `json:"containers"`
+    }
+
+    UpdateEnvVarsRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Containers []ContainerEnvVars `json:"containers"`
+    }
+
+        // ==================== 暂停/恢复更新 ====================
+
+    PauseStatusResponse {
+        Paused bool `json:"paused"`
+        SupportType string `json:"supportType"`
+    }
+
+        // ==================== 资源配额相关（与 types/utils.go 一致）====================
+
+    CommResourceList {
+        Cpu string `json:"cpu,optional"`
+        Memory string `json:"memory,optional"`
+    }
+
+    CommResourceRequirements {
+        Limits CommResourceList `json:"limits,optional"`
+        Requests CommResourceList `json:"requests,optional"`
+    }
+
+    CommContainerResources {
+        ContainerName string `json:"containerName"`
+        ContainerType string `json:"containerType"`
+        Resources CommResourceRequirements `json:"resources"`
+    }
+
+    CommResourcesResponse {
+        Containers []CommContainerResources `json:"containers"`
+    }
+
+    CommUpdateResourcesRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Containers []CommContainerResources `json:"containers"`
+    }
+
+        // ==================== 健康检查相关（与 types/utils.go 一致）====================
+
+    CommHTTPHeader {
+        Name string `json:"name"`
+        Value string `json:"value"`
+    }
+
+    CommHTTPGetAction {
+        Path string `json:"path"`
+        Port int32 `json:"port"`
+        Host string `json:"host,optional"`
+        Scheme string `json:"scheme,optional"`
+        HTTPHeaders []CommHTTPHeader `json:"httpHeaders,optional"`
+    }
+
+    CommTCPSocketAction {
+        Port int32 `json:"port"`
+        Host string `json:"host,optional"`
+    }
+
+    CommExecAction {
+        Command []string `json:"command"`
+    }
+
+    CommGRPCAction {
+        Port int32 `json:"port"`
+        Service string `json:"service,optional"`
+    }
+
+    CommProbe {
+        Type string `json:"type"`
+        HttpGet *CommHTTPGetAction `json:"httpGet,optional"`
+        TcpSocket *CommTCPSocketAction `json:"tcpSocket,optional"`
+        Exec *CommExecAction `json:"exec,optional"`
+        Grpc *CommGRPCAction `json:"grpc,optional"`
+        InitialDelaySeconds int32 `json:"initialDelaySeconds,optional"`
+        TimeoutSeconds int32 `json:"timeoutSeconds,optional"`
+        PeriodSeconds int32 `json:"periodSeconds,optional"`
+        SuccessThreshold int32 `json:"successThreshold,optional"`
+        FailureThreshold int32 `json:"failureThreshold,optional"`
+    }
+
+    CommContainerProbes {
+        ContainerName string `json:"containerName"`
+        ContainerType string `json:"containerType"`
+        LivenessProbe *CommProbe `json:"livenessProbe,optional"`
+        ReadinessProbe *CommProbe `json:"readinessProbe,optional"`
+        StartupProbe *CommProbe `json:"startupProbe,optional"`
+    }
+
+    CommProbesResponse {
+        Containers []CommContainerProbes `json:"containers"`
+    }
+
+    CommUpdateProbesRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Containers []CommContainerProbes `json:"containers"`
+    }
+
+        // ==================== 镜像管理相关（与 types/utils.go 一致）====================
+
+    CommContainerImageInfo {
+        ContainerName string `json:"containerName"`
+        ContainerType string `json:"containerType"`
+        Image string `json:"image"`
+    }
+
+    CommContainerInfoList {
+        Containers []CommContainerImageInfo `json:"containers"`
+    }
+
+    CommUpdateImagesRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Containers CommContainerInfoList `json:"containers"`
+        Reason string `json:"reason,optional"`
+    }
+
+        // ==================== 调度配置相关（与 types/utils.go 一致）====================
+
+    CommNodeSelectorRequirement {
+        Key string `json:"key"`
+        Operator string `json:"operator"`
+        Values []string `json:"values,optional"`
+    }
+
+    CommNodeSelectorTerm {
+        MatchExpressions []CommNodeSelectorRequirement `json:"matchExpressions,optional"`
+        MatchFields []CommNodeSelectorRequirement `json:"matchFields,optional"`
+    }
+
+    CommNodeSelector {
+        NodeSelectorTerms []CommNodeSelectorTerm `json:"nodeSelectorTerms"`
+    }
+
+    CommPreferredSchedulingTerm {
+        Weight int32 `json:"weight"`
+        Preference CommNodeSelectorTerm `json:"preference"`
+    }
+
+    CommNodeAffinity {
+        RequiredDuringSchedulingIgnoredDuringExecution *CommNodeSelector `json:"requiredDuringSchedulingIgnoredDuringExecution,optional"`
+        PreferredDuringSchedulingIgnoredDuringExecution []CommPreferredSchedulingTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,optional"`
+    }
+
+    CommLabelSelectorRequirement {
+        Key string `json:"key"`
+        Operator string `json:"operator"`
+        Values []string `json:"values,optional"`
+    }
+
+    CommLabelSelectorConfig {
+        MatchLabels map[string]string `json:"matchLabels,optional"`
+        MatchExpressions []CommLabelSelectorRequirement `json:"matchExpressions,optional"`
+    }
+
+    CommPodAffinityTerm {
+        LabelSelector *CommLabelSelectorConfig `json:"labelSelector,optional"`
+        Namespaces []string `json:"namespaces,optional"`
+        TopologyKey string `json:"topologyKey"`
+        NamespaceSelector *CommLabelSelectorConfig `json:"namespaceSelector,optional"`
+    }
+
+    CommWeightedPodAffinityTerm {
+        Weight int32 `json:"weight"`
+        PodAffinityTerm CommPodAffinityTerm `json:"podAffinityTerm"`
+    }
+
+    CommPodAffinity {
+        RequiredDuringSchedulingIgnoredDuringExecution []CommPodAffinityTerm `json:"requiredDuringSchedulingIgnoredDuringExecution,optional"`
+        PreferredDuringSchedulingIgnoredDuringExecution []CommWeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,optional"`
+    }
+
+    CommPodAntiAffinity {
+        RequiredDuringSchedulingIgnoredDuringExecution []CommPodAffinityTerm `json:"requiredDuringSchedulingIgnoredDuringExecution,optional"`
+        PreferredDuringSchedulingIgnoredDuringExecution []CommWeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,optional"`
+    }
+
+    CommAffinityConfig {
+        NodeAffinity *CommNodeAffinity `json:"nodeAffinity,optional"`
+        PodAffinity *CommPodAffinity `json:"podAffinity,optional"`
+        PodAntiAffinity *CommPodAntiAffinity `json:"podAntiAffinity,optional"`
+    }
+
+    CommToleration {
+        Key string `json:"key,optional"`
+        Operator string `json:"operator,optional"`
+        Value string `json:"value,optional"`
+        Effect string `json:"effect,optional"`
+        TolerationSeconds int64 `json:"tolerationSeconds,optional"`
+    }
+
+    CommTopologySpreadConstraint {
+        MaxSkew int32 `json:"maxSkew"`
+        TopologyKey string `json:"topologyKey"`
+        WhenUnsatisfiable string `json:"whenUnsatisfiable"`
+        LabelSelector *CommLabelSelectorConfig `json:"labelSelector,optional"`
+        MinDomains int32 `json:"minDomains,optional"`
+        NodeAffinityPolicy string `json:"nodeAffinityPolicy,optional"`
+        NodeTaintsPolicy string `json:"nodeTaintsPolicy,optional"`
+        MatchLabelKeys []string `json:"matchLabelKeys,optional"`
+    }
+
+    CommSchedulingConfig {
+        NodeSelector map[string]string `json:"nodeSelector,optional"`
+        NodeName string `json:"nodeName,optional"`
+        Affinity *CommAffinityConfig `json:"affinity,optional"`
+        Tolerations []CommToleration `json:"tolerations,optional"`
+        TopologySpreadConstraints []CommTopologySpreadConstraint `json:"topologySpreadConstraints,optional"`
+    }
+
+    CommUpdateSchedulingConfigRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        NodeSelector map[string]string `json:"nodeSelector,optional"`
+        NodeName string `json:"nodeName,optional"`
+        Affinity *CommAffinityConfig `json:"affinity,optional"`
+        Tolerations []CommToleration `json:"tolerations,optional"`
+        TopologySpreadConstraints []CommTopologySpreadConstraint `json:"topologySpreadConstraints,optional"`
+    }
+
+        // ==================== 高级容器配置相关（与 types/utils.go 一致）====================
+
+    CommSleepAction {
+        Seconds int64 `json:"seconds"`
+    }
+
+    CommLifecycleHandler {
+        Type string `json:"type"`
+        Exec *CommExecAction `json:"exec,optional"`
+        HTTPGet *CommHTTPGetAction `json:"httpGet,optional"`
+        TCPSocket *CommTCPSocketAction `json:"tcpSocket,optional"`
+        Sleep *CommSleepAction `json:"sleep,optional"`
+    }
+
+    CommLifecycle {
+        PostStart *CommLifecycleHandler `json:"postStart,optional"`
+        PreStop *CommLifecycleHandler `json:"preStop,optional"`
+    }
+
+    CommCapabilities {
+        Add []string `json:"add,optional"`
+        Drop []string `json:"drop,optional"`
+    }
+
+    CommSeccompProfile {
+        Type string `json:"type"`
+        LocalhostProfile string `json:"localhostProfile,optional"`
+    }
+
+    CommSELinuxOptions {
+        User string `json:"user,optional"`
+        Role string `json:"role,optional"`
+        Type string `json:"type,optional"`
+        Level string `json:"level,optional"`
+    }
+
+    CommAppArmorProfile {
+        Type string `json:"type"`
+        LocalhostProfile string `json:"localhostProfile,optional"`
+    }
+
+    CommContainerSecurityContext {
+        RunAsUser int64 `json:"runAsUser,optional"`
+        RunAsGroup int64 `json:"runAsGroup,optional"`
+        RunAsNonRoot bool `json:"runAsNonRoot,optional"`
+        ReadOnlyRootFilesystem bool `json:"readOnlyRootFilesystem,optional"`
+        Privileged bool `json:"privileged,optional"`
+        AllowPrivilegeEscalation bool `json:"allowPrivilegeEscalation,optional"`
+        ProcMount string `json:"procMount,optional"`
+        Capabilities *CommCapabilities `json:"capabilities,optional"`
+        SeccompProfile *CommSeccompProfile `json:"seccompProfile,optional"`
+        SELinuxOptions *CommSELinuxOptions `json:"seLinuxOptions,optional"`
+        AppArmorProfile *CommAppArmorProfile `json:"appArmorProfile,optional"`
+    }
+
+    CommContainerAdvancedConfig {
+        ContainerName string `json:"containerName"`
+        ContainerType string `json:"containerType,optional"`
+        Lifecycle *CommLifecycle `json:"lifecycle,optional"`
+        ImagePullPolicy string `json:"imagePullPolicy,optional"`
+        Command []string `json:"command,optional"`
+        Args []string `json:"args,optional"`
+        WorkingDir string `json:"workingDir,optional"`
+        Stdin bool `json:"stdin,optional"`
+        StdinOnce bool `json:"stdinOnce,optional"`
+        TTY bool `json:"tty,optional"`
+        SecurityContext *CommContainerSecurityContext `json:"securityContext,optional"`
+    }
+
+    CommDNSConfigOption {
+        Name string `json:"name"`
+        Value string `json:"value,optional"`
+    }
+
+    CommDNSConfig {
+        Nameservers []string `json:"nameservers,optional"`
+        Searches []string `json:"searches,optional"`
+        Options []CommDNSConfigOption `json:"options,optional"`
+    }
+
+    CommHostAlias {
+        IP string `json:"ip"`
+        Hostnames []string `json:"hostnames"`
+    }
+
+    CommPodOS {
+        Name string `json:"name"`
+    }
+
+    CommSysctl {
+        Name string `json:"name"`
+        Value string `json:"value"`
+    }
+
+    CommWindowsSecurityContextOptions {
+        GMSACredentialSpecName string `json:"gmsaCredentialSpecName,optional"`
+        GMSACredentialSpec string `json:"gmsaCredentialSpec,optional"`
+        RunAsUserName string `json:"runAsUserName,optional"`
+        HostProcess bool `json:"hostProcess,optional"`
+    }
+
+    CommPodSecurityContext {
+        RunAsUser int64 `json:"runAsUser,optional"`
+        RunAsGroup int64 `json:"runAsGroup,optional"`
+        RunAsNonRoot bool `json:"runAsNonRoot,optional"`
+        SupplementalGroups []int64 `json:"supplementalGroups,optional"`
+        FSGroup int64 `json:"fsGroup,optional"`
+        FSGroupChangePolicy string `json:"fsGroupChangePolicy,optional"`
+        SeccompProfile *CommSeccompProfile `json:"seccompProfile,optional"`
+        SELinuxOptions *CommSELinuxOptions `json:"seLinuxOptions,optional"`
+        AppArmorProfile *CommAppArmorProfile `json:"appArmorProfile,optional"`
+        Sysctls []CommSysctl `json:"sysctls,optional"`
+        WindowsOptions *CommWindowsSecurityContextOptions `json:"windowsOptions,optional"`
+    }
+
+    CommPodAdvancedConfig {
+        TerminationGracePeriodSeconds int64 `json:"terminationGracePeriodSeconds,optional"`
+        RestartPolicy string `json:"restartPolicy,optional"`
+        DNSPolicy string `json:"dnsPolicy,optional"`
+        DNSConfig *CommDNSConfig `json:"dnsConfig,optional"`
+        HostNetwork bool `json:"hostNetwork,optional"`
+        HostPID bool `json:"hostPID,optional"`
+        HostIPC bool `json:"hostIPC,optional"`
+        HostUsers bool `json:"hostUsers,optional"`
+        Hostname string `json:"hostname,optional"`
+        Subdomain string `json:"subdomain,optional"`
+        HostAliases []CommHostAlias `json:"hostAliases,optional"`
+        ServiceAccountName string `json:"serviceAccountName,optional"`
+        AutomountServiceAccountToken bool `json:"automountServiceAccountToken,optional"`
+        ImagePullSecrets []string `json:"imagePullSecrets,optional"`
+        PriorityClassName string `json:"priorityClassName,optional"`
+        Priority int32 `json:"priority,optional"`
+        PreemptionPolicy string `json:"preemptionPolicy,optional"`
+        RuntimeClassName string `json:"runtimeClassName,optional"`
+        SecurityContext *CommPodSecurityContext `json:"securityContext,optional"`
+        ShareProcessNamespace bool `json:"shareProcessNamespace,optional"`
+        OS *CommPodOS `json:"os,optional"`
+        SchedulerName string `json:"schedulerName,optional"`
+        ActiveDeadlineSeconds int64 `json:"activeDeadlineSeconds,optional"`
+    }
+
+    CommAdvancedConfigResponse {
+        PodConfig CommPodAdvancedConfig `json:"podConfig"`
+        Containers []CommContainerAdvancedConfig `json:"containers"`
+    }
+
+    CommUpdateAdvancedConfigRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        PodConfig *CommPodAdvancedConfig `json:"podConfig,optional"`
+        Containers []CommContainerAdvancedConfig `json:"containers,optional"`
+    }
+
+        // ==================== Job 相关 ====================
+
+    JobParallelismConfig {
+        Parallelism int32 `json:"parallelism"`
+        Completions int32 `json:"completions"`
+        BackoffLimit int32 `json:"backoffLimit"`
+        ActiveDeadlineSeconds int64 `json:"activeDeadlineSeconds,optional"`
+    }
+
+    UpdateJobParallelismRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Parallelism int32 `json:"parallelism,optional"`
+        Completions int32 `json:"completions,optional"`
+        BackoffLimit int32 `json:"backoffLimit,optional"`
+        ActiveDeadlineSeconds int64 `json:"activeDeadlineSeconds,optional"`
+    }
+
+        // ==================== CronJob 相关 ====================
+
+    CronJobScheduleConfig {
+        Schedule string `json:"schedule"`
+        Timezone string `json:"timezone,optional"`
+        ConcurrencyPolicy string `json:"concurrencyPolicy"`
+        Suspend bool `json:"suspend"`
+        StartingDeadlineSeconds int64 `json:"startingDeadlineSeconds,optional"`
+        SuccessfulJobsHistoryLimit int32 `json:"successfulJobsHistoryLimit"`
+        FailedJobsHistoryLimit int32 `json:"failedJobsHistoryLimit"`
+    }
+
+    UpdateCronJobScheduleRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Schedule string `json:"schedule,optional"`
+        Timezone string `json:"timezone,optional"`
+        ConcurrencyPolicy string `json:"concurrencyPolicy,optional"`
+        StartingDeadlineSeconds int64 `json:"startingDeadlineSeconds,optional"`
+        SuccessfulJobsHistoryLimit int32 `json:"successfulJobsHistoryLimit,optional"`
+        FailedJobsHistoryLimit int32 `json:"failedJobsHistoryLimit,optional"`
+    }
+
+    CronJobHistoryItem {
+        Name string `json:"name"`
+        Status string `json:"status"`
+        Completions int32 `json:"completions"`
+        Succeeded int32 `json:"succeeded"`
+        Active int32 `json:"active"`
+        Failed int32 `json:"failed"`
+        StartTime int64 `json:"startTime,optional"`
+        CompletionTime int64 `json:"completionTime,optional"`
+        Duration string `json:"duration,optional"`
+        CreationTimestamp int64 `json:"creationTimestamp"`
+    }
+
+    CronJobHistoryResponse {
+        Jobs []CronJobHistoryItem `json:"jobs"`
+    }
+
+        // ==================== 调度配置相关（保留原有定义供其他接口使用）====================
+
+    SchedulingConfig {
+        NodeSelector map[string]string `json:"nodeSelector,optional"`
+        NodeName string `json:"nodeName,optional"`
+        Affinity *AffinityConfig `json:"affinity,optional"`
+        Tolerations []TolerationConfig `json:"tolerations,optional"`
+        TopologySpreadConstraints []TopologySpreadConstraintConfig `json:"topologySpreadConstraints,optional"`
+        SchedulerName string `json:"schedulerName,optional"`
+        PriorityClassName string `json:"priorityClassName,optional"`
+        Priority int32 `json:"priority,optional"`
+        RuntimeClassName string `json:"runtimeClassName,optional"`
+    }
+
+    AffinityConfig {
+        NodeAffinity *NodeAffinityConfig `json:"nodeAffinity,optional"`
+        PodAffinity *PodAffinityConfig `json:"podAffinity,optional"`
+        PodAntiAffinity *PodAntiAffinityConfig `json:"podAntiAffinity,optional"`
+    }
+
+    NodeAffinityConfig {
+        RequiredDuringSchedulingIgnoredDuringExecution *NodeSelectorConfig `json:"requiredDuringSchedulingIgnoredDuringExecution,optional"`
+        PreferredDuringSchedulingIgnoredDuringExecution []PreferredSchedulingTermConfig `json:"preferredDuringSchedulingIgnoredDuringExecution,optional"`
+    }
+
+    NodeSelectorConfig {
+        NodeSelectorTerms []NodeSelectorTermConfig `json:"nodeSelectorTerms"`
+    }
+
+    NodeSelectorTermConfig {
+        MatchExpressions []NodeSelectorRequirementConfig `json:"matchExpressions,optional"`
+        MatchFields []NodeSelectorRequirementConfig `json:"matchFields,optional"`
+    }
+
+    NodeSelectorRequirementConfig {
+        Key string `json:"key"`
+        Operator string `json:"operator"`
+        Values []string `json:"values,optional"`
+    }
+
+    PreferredSchedulingTermConfig {
+        Weight int32 `json:"weight"`
+        Preference NodeSelectorTermConfig `json:"preference"`
+    }
+
+    PodAffinityConfig {
+        RequiredDuringSchedulingIgnoredDuringExecution []PodAffinityTermConfig `json:"requiredDuringSchedulingIgnoredDuringExecution,optional"`
+        PreferredDuringSchedulingIgnoredDuringExecution []WeightedPodAffinityTermConfig `json:"preferredDuringSchedulingIgnoredDuringExecution,optional"`
+    }
+
+    PodAntiAffinityConfig {
+        RequiredDuringSchedulingIgnoredDuringExecution []PodAffinityTermConfig `json:"requiredDuringSchedulingIgnoredDuringExecution,optional"`
+        PreferredDuringSchedulingIgnoredDuringExecution []WeightedPodAffinityTermConfig `json:"preferredDuringSchedulingIgnoredDuringExecution,optional"`
+    }
+
+    PodAffinityTermConfig {
+        LabelSelector *LabelSelectorConfig `json:"labelSelector,optional"`
+        Namespaces []string `json:"namespaces,optional"`
+        TopologyKey string `json:"topologyKey"`
+        NamespaceSelector *LabelSelectorConfig `json:"namespaceSelector,optional"`
+    }
+
+    WeightedPodAffinityTermConfig {
+        Weight int32 `json:"weight"`
+        PodAffinityTerm PodAffinityTermConfig `json:"podAffinityTerm"`
+    }
+
+    LabelSelectorConfig {
+        MatchLabels map[string]string `json:"matchLabels,optional"`
+        MatchExpressions []LabelSelectorRequirementConfig `json:"matchExpressions,optional"`
+    }
+
+    LabelSelectorRequirementConfig {
+        Key string `json:"key"`
+        Operator string `json:"operator"`
+        Values []string `json:"values,optional"`
+    }
+
+    TolerationConfig {
+        Key string `json:"key,optional"`
+        Operator string `json:"operator,optional"`
+        Value string `json:"value,optional"`
+        Effect string `json:"effect,optional"`
+        TolerationSeconds int64 `json:"tolerationSeconds,optional"`
+    }
+
+    TopologySpreadConstraintConfig {
+        MaxSkew int32 `json:"maxSkew"`
+        TopologyKey string `json:"topologyKey"`
+        WhenUnsatisfiable string `json:"whenUnsatisfiable"`
+        LabelSelector *LabelSelectorConfig `json:"labelSelector,optional"`
+        MinDomains int32 `json:"minDomains,optional"`
+        NodeAffinityPolicy string `json:"nodeAffinityPolicy,optional"`
+        NodeTaintsPolicy string `json:"nodeTaintsPolicy,optional"`
+    }
+
+    UpdateSchedulingConfigRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        NodeName string `json:"nodeName,optional"`
+        NodeSelector map[string]string `json:"nodeSelector,optional"`
+        Affinity *AffinityConfig `json:"affinity,optional"`
+        Tolerations []TolerationConfig `json:"tolerations,optional"`
+        TopologySpreadConstraints []TopologySpreadConstraintConfig `json:"topologySpreadConstraints,optional"`
+        SchedulerName string `json:"schedulerName,optional"`
+        PriorityClassName string `json:"priorityClassName,optional"`
+        Priority int32 `json:"priority,optional"`
+        RuntimeClassName string `json:"runtimeClassName,optional"`
+    }
+
+        // ==================== 存储配置相关 ====================
+
+    StorageConfig {
+        Volumes []VolumeConfig `json:"volumes"`
+        VolumeMounts []VolumeMountConfig `json:"volumeMounts"`
+        VolumeClaimTemplates []PersistentVolumeClaimConfig `json:"volumeClaimTemplates,optional"`
+    }
+
+    VolumeConfig {
+        Name string `json:"name"`
+        Type string `json:"type"`
+        EmptyDir *EmptyDirVolumeConfig `json:"emptyDir,optional"`
+        HostPath *HostPathVolumeConfig `json:"hostPath,optional"`
+        ConfigMap *ConfigMapVolumeConfig `json:"configMap,optional"`
+        Secret *SecretVolumeConfig `json:"secret,optional"`
+        PersistentVolumeClaim *PVCVolumeConfig `json:"persistentVolumeClaim,optional"`
+        NFS *NFSVolumeConfig `json:"nfs,optional"`
+        DownwardAPI *DownwardAPIVolumeConfig `json:"downwardAPI,optional"`
+        Projected *ProjectedVolumeConfig `json:"projected,optional"`
+        CSI *CSIVolumeConfig `json:"csi,optional"`
+    }
+
+    EmptyDirVolumeConfig {
+        Medium string `json:"medium,optional"`
+        SizeLimit string `json:"sizeLimit,optional"`
+    }
+
+    HostPathVolumeConfig {
+        Path string `json:"path"`
+        Type string `json:"type,optional"`
+    }
+
+    ConfigMapVolumeConfig {
+        Name string `json:"name"`
+        Items []KeyToPathConfig `json:"items,optional"`
+        DefaultMode int32 `json:"defaultMode,optional"`
+        Optional bool `json:"optional,optional"`
+    }
+
+    SecretVolumeConfig {
+        SecretName string `json:"secretName"`
+        Items []KeyToPathConfig `json:"items,optional"`
+        DefaultMode int32 `json:"defaultMode,optional"`
+        Optional bool `json:"optional,optional"`
+    }
+
+    KeyToPathConfig {
+        Key string `json:"key"`
+        Path string `json:"path"`
+        Mode int32 `json:"mode,optional"`
+    }
+
+    PVCVolumeConfig {
+        ClaimName string `json:"claimName"`
+        ReadOnly bool `json:"readOnly,optional"`
+    }
+
+    NFSVolumeConfig {
+        Server string `json:"server"`
+        Path string `json:"path"`
+        ReadOnly bool `json:"readOnly,optional"`
+    }
+
+    DownwardAPIVolumeConfig {
+        Items []DownwardAPIVolumeFileConfig `json:"items,optional"`
+        DefaultMode int32 `json:"defaultMode,optional"`
+    }
+
+    DownwardAPIVolumeFileConfig {
+        Path string `json:"path"`
+        FieldRef *ObjectFieldSelector `json:"fieldRef,optional"`
+        ResourceFieldRef *ResourceFieldSelector `json:"resourceFieldRef,optional"`
+        Mode int32 `json:"mode,optional"`
+    }
+
+    ProjectedVolumeConfig {
+        Sources []VolumeProjectionConfig `json:"sources"`
+        DefaultMode int32 `json:"defaultMode,optional"`
+    }
+
+    VolumeProjectionConfig {
+        Secret *SecretProjectionConfig `json:"secret,optional"`
+        ConfigMap *ConfigMapProjectionConfig `json:"configMap,optional"`
+        DownwardAPI *DownwardAPIProjectionConfig `json:"downwardAPI,optional"`
+        ServiceAccountToken *ServiceAccountTokenProjectionConfig `json:"serviceAccountToken,optional"`
+    }
+
+    SecretProjectionConfig {
+        Name string `json:"name"`
+        Items []KeyToPathConfig `json:"items,optional"`
+        Optional bool `json:"optional,optional"`
+    }
+
+    ConfigMapProjectionConfig {
+        Name string `json:"name"`
+        Items []KeyToPathConfig `json:"items,optional"`
+        Optional bool `json:"optional,optional"`
+    }
+
+    DownwardAPIProjectionConfig {
+        Items []DownwardAPIVolumeFileConfig `json:"items"`
+    }
+
+    ServiceAccountTokenProjectionConfig {
+        Audience string `json:"audience"`
+        ExpirationSeconds int64 `json:"expirationSeconds,optional"`
+        Path string `json:"path"`
+    }
+
+    CSIVolumeConfig {
+        Driver string `json:"driver"`
+        ReadOnly bool `json:"readOnly,optional"`
+        FSType string `json:"fsType,optional"`
+        VolumeAttributes map[string]string `json:"volumeAttributes,optional"`
+        NodePublishSecretRef *SecretReference `json:"nodePublishSecretRef,optional"`
+    }
+
+    SecretReference {
+        Name string `json:"name"`
+    }
+
+    VolumeMountConfig {
+        ContainerName string `json:"containerName"`
+        ContainerType string `json:"containerType"`
+        Mounts []VolumeMount `json:"mounts"`
+    }
+
+    VolumeMount {
+        Name string `json:"name"`
+        MountPath string `json:"mountPath"`
+        SubPath string `json:"subPath,optional"`
+        SubPathExpr string `json:"subPathExpr,optional"`
+        ReadOnly bool `json:"readOnly,optional"`
+        MountPropagation string `json:"mountPropagation,optional"`
+    }
+
+    PersistentVolumeClaimConfig {
+        Name string `json:"name"`
+        StorageClassName string `json:"storageClassName,optional"`
+        AccessModes []string `json:"accessModes"`
+        Resources PersistentVolumeClaimResources `json:"resources"`
+        VolumeMode string `json:"volumeMode,optional"`
+        Selector *LabelSelectorConfig `json:"selector,optional"`
+    }
+
+    PersistentVolumeClaimResources {
+        Requests StorageResourceList `json:"requests"`
+        Limits StorageResourceList `json:"limits,optional"`
+    }
+
+    StorageResourceList {
+        Storage string `json:"storage"`
+    }
+
+    UpdateStorageConfigRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Volumes []VolumeConfig `json:"volumes"`
+        VolumeMounts []VolumeMountConfig `json:"volumeMounts"`
+        VolumeClaimTemplates []PersistentVolumeClaimConfig `json:"volumeClaimTemplates,optional"`
+    }
+
+    GetDefaultPodNameRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        PodName string `form:"podName" validate:"required"`
+    }
+
+    DefaultPodNameRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        PodName string `json:"podName" validate:"required"`
+    }
+
+        // ==================== 事件相关 ====================
+
+    EventInfow {
+        Type string `json:"type"`
+        Reason string `json:"reason"`
+        Message string `json:"message"`
+        Count int32 `json:"count"`
+        FirstTimestamp int64 `json:"firstTimestamp"`
+        LastTimestamp int64 `json:"lastTimestamp"`
+        Source string `json:"source"`
+        InvolvedObjectKind string `json:"involvedObjectKind"`
+        InvolvedObjectName string `json:"involvedObjectName"`
+        InvolvedObjectUid string `json:"involvedObjectUid"`
+        ReportingComponent string `json:"reportingComponent"`
+        ReportingInstance string `json:"reportingInstance"`
+        Action string `json:"action"`
+        EventTime int64 `json:"eventTime"`
+    }
+
+    EventsListResponse {
+        Items []EventInfow `json:"items"`
+        Total int `json:"total"`
+        Page int `json:"page"`
+        PageSize int `json:"pageSize"`
+        TotalPages int `json:"totalPages"`
+    }
+
+    EventsQueryRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Namespace string `form:"namespace,optional"`
+        InvolvedObjectKind string `form:"involvedObjectKind,optional"`
+        InvolvedObjectName string `form:"involvedObjectName,optional"`
+        InvolvedObjectUid string `form:"involvedObjectUid,optional"`
+        Type string `form:"type,optional"`
+        Page int `form:"page,default=1"`
+        PageSize int `form:"pageSize,default=20"`
+    }
+
+    GetPodEventsRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        PodName string `path:"podName" validate:"required"`
+        Page int `form:"page,default=1"`
+        PageSize int `form:"pageSize,default=20"`
+    }
+
+    GetNamespaceEventsRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Page int `form:"page,default=1"`
+        PageSize int `form:"pageSize,default=20"`
+    }
+
+    PodLabelsResponse {
+        Labels map[string]string `json:"labels"`
+    }
+
+    GetDefaultJobNameRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        JobName string `form:"jobName" validate:"required"`
+    }
+
+    // 删除 Job 请求（DELETE 方法）
+    DeleteJobNameRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        JobName string `json:"jobName" validate:"required"`
+    }
+
+        // ==================== Job Spec 配置相关 ====================
+
+    PodFailurePolicyOnExitCodesRequirement {
+        ContainerName string `json:"containerName,optional"`
+        Operator string `json:"operator"`
+        Values []int32 `json:"values"`
+    }
+
+    PodFailurePolicyOnPodConditionsPattern {
+        Type string `json:"type"`
+        Status string `json:"status"`
+    }
+
+    PodFailurePolicyRule {
+        Action string `json:"action"`
+        OnExitCodes *PodFailurePolicyOnExitCodesRequirement `json:"onExitCodes,optional"`
+        OnPodConditions []PodFailurePolicyOnPodConditionsPattern `json:"onPodConditions,optional"`
+    }
+
+    PodFailurePolicyConfig {
+        Rules []PodFailurePolicyRule `json:"rules"`
+    }
+
+    JobSpecConfig {
+        Parallelism int32 `json:"parallelism,optional"`
+        Completions int32 `json:"completions,optional"`
+        BackoffLimit int32 `json:"backoffLimit,optional"`
+        ActiveDeadlineSeconds int64 `json:"activeDeadlineSeconds,optional"`
+        TTLSecondsAfterFinished int32 `json:"ttlSecondsAfterFinished,optional"`
+        CompletionMode string `json:"completionMode"`
+        Suspend bool `json:"suspend"`
+        PodReplacementPolicy string `json:"podReplacementPolicy"`
+        BackoffLimitPerIndex int32 `json:"backoffLimitPerIndex,optional"`
+        MaxFailedIndexes int32 `json:"maxFailedIndexes,optional"`
+        PodFailurePolicy *PodFailurePolicyConfig `json:"podFailurePolicy,optional"`
+    }
+
+    UpdateJobSpecRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Parallelism int32 `json:"parallelism,optional"`
+        Completions int32 `json:"completions,optional"`
+        BackoffLimit int32 `json:"backoffLimit,optional"`
+        ActiveDeadlineSeconds int64 `json:"activeDeadlineSeconds,optional"`
+        TTLSecondsAfterFinished int32 `json:"ttlSecondsAfterFinished,optional"`
+        CompletionMode string `json:"completionMode,optional"`
+        Suspend bool `json:"suspend,optional"`
+        PodReplacementPolicy string `json:"podReplacementPolicy,optional"`
+        BackoffLimitPerIndex int32 `json:"backoffLimitPerIndex,optional"`
+        MaxFailedIndexes int32 `json:"maxFailedIndexes,optional"`
+        PodFailurePolicy *PodFailurePolicyConfig `json:"podFailurePolicy,optional"`
+    }
+
+        // ==================== 下次执行时间相关 ====================
+
+    NextScheduleTimeResponse {
+        NextScheduleTime int64 `json:"nextScheduleTime,optional"`
+        Schedule string `json:"schedule"`
+        Timezone string `json:"timezone,optional"`
+        IsSuspended bool `json:"isSuspended"`
+        CurrentTime int64 `json:"currentTime"`
+    }
+
+        // ==================== 通用列表相关 ====================
+
+    ListResponse {
+        Total int `json:"total"`
+        Page int `json:"page"`
+        PageSize int `json:"pageSize"`
+        TotalPages int `json:"totalPages"`
+    }
+
+        // ==================== Job 列表相关 ====================
+
+    JobInfo {
+        Name string `json:"name"`
+        Namespace string `json:"namespace"`
+        Completions int32 `json:"completions"`
+        Parallelism int32 `json:"parallelism"`
+        Succeeded int32 `json:"succeeded"`
+        Failed int32 `json:"failed"`
+        Active int32 `json:"active"`
+        StartTime int64 `json:"startTime,optional"`
+        CompletionTime int64 `json:"completionTime,optional"`
+        Duration string `json:"duration"`
+        Status string `json:"status"`
+        CreationTimestamp int64 `json:"creationTimestamp"`
+    }
+
+    ListJobsRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Namespace string `form:"namespace,optional"`
+        Page int `form:"page,default=1" validate:"min=1"`
+        PageSize int `form:"pageSize,default=20" validate:"min=1"`
+        Search string `form:"search,optional"`
+        Labels string `form:"labels,optional"`
+        SortBy string `form:"sortBy,optional"`
+        SortDesc bool `form:"sortDesc,optional"`
+    }
+
+    ListJobsResponse {
+        Total int `json:"total"`
+        Page int `json:"page"`
+        PageSize int `json:"pageSize"`
+        TotalPages int `json:"totalPages"`
+        Items []JobInfo `json:"items"`
+    }
+
+        // ==================== Pod 列表相关 ====================
+
+    PodDetailInfo {
+        Name string `json:"name"`
+        Namespace string `json:"namespace"`
+        Status string `json:"status"`
+        Ready string `json:"ready"`
+        Restarts int32 `json:"restarts"`
+        Age string `json:"age"`
+        Node string `json:"node"`
+        PodIP string `json:"podIP"`
+        Labels map[string]string `json:"labels"`
+        CreationTime int64 `json:"creationTime"`
+    }
+
+    ListPodsWithPaginationRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        Namespace string `form:"namespace,optional"`
+        Page int `form:"page,default=1" validate:"min=1"`
+        PageSize int `form:"pageSize,default=20" validate:"min=1"`
+        Search string `form:"search,optional"`
+        Labels string `form:"labels,optional"`
+        SortBy string `form:"sortBy,optional"`
+        SortDesc bool `form:"sortDesc,optional"`
+    }
+
+    ListPodsWithPaginationResponse {
+        Total int `json:"total"`
+        Page int `json:"page"`
+        PageSize int `json:"pageSize"`
+        TotalPages int `json:"totalPages"`
+        Items []PodDetailInfo `json:"items"`
+    }
+
+    GetJobPodListRequest {
+        Id uint64 `path:"id" validate:"required,min=1"`
+        JobName string `form:"jobName"`
+    }
+
+    GetPodContainersWithClusterNamespaceRequest {
+        ClusterUuid string `form:"clusterUuid"  validate:"required"`
+        Namespace string `form:"namespace"  validate:"required"`
+        PodName string `form:"podName"  validate:"required"`
+    }
+
+        // 访问服务摘要请求
+    GetApplicationSummaryRequest {
+        ApplicationId uint64 `path:"applicationId"  validate:"required,min=1"`
+        ClusterUuid string `form:"clusterUuid"  validate:"required"`
+        Namespace string `form:"namespace"  validate:"required"`
+    }
+
+        // WorkloadResourceSummary 工作负载资源摘要
+    ApplicationSummary {
+        PodCount int `json:"podCount"`
+        AbnormalPodCount int `json:"abnormalPodCount"`
+        ServiceCount int `json:"serviceCount"`
+        IngressCount int `json:"ingressCount"`
+        Service ApplicationAccessSummary `json:"service"`
+        IngressDomains []string `json:"ingressDomains"`
+    }
+
+        // ApplicationAccessSummary Service 访问汇总
+    ApplicationAccessSummary {
+        InternalAccessList []string `json:"internalAccessList"`
+        ExternalAccessList []string `json:"externalAccessList"`
+        NodePortList []string `json:"nodePortList"`
+    }
+
+    GetPodYamlWithClusterUuidRequest {
+        ClusterUuid string `form:"clusterUuid"  validate:"required"`
+        Namespace string `form:"namespace"  validate:"required"`
+        PodName string `form:"podName"  validate:"required"`
+    }
+
+    GetPodDetailWithClusterUuidRequest {
+        ClusterUuid string `form:"clusterUuid"  validate:"required"`
+        Namespace string `form:"namespace"  validate:"required"`
+        PodName string `form:"podName"  validate:"required"`
+    }
+
+    InjectEphemeralContainerWithClusterUuidRequest {
+        ClusterUuid string `form:"clusterUuid"  validate:"required"`
+        Namespace string `form:"namespace"  validate:"required"`
+        PodName string `form:"podName"  validate:"required"`
+        ContainerName string `json:"containerName,optional" validate:"-"`
+        Image string `json:"image" validate:"-"`
+        Command []string `json:"command" validate:"-"`
+        Args []string `json:"args" validate:"-"`
+    }
+)
+
+@server(
+    middleware: JWTAuthMiddleware
+    group: workload
+    prefix: /workload/v1/resource
+)
+
+service workload-api {
+    // 摘要
+    @doc "获取应用摘要"
+    @handler GetApplicationSummaryHandler
+    get /:applicationId/summary (GetApplicationSummaryRequest) returns (ApplicationSummary)
+
+    // ==================== 基础操作 ====================
+
+    @doc "获取pod列表"
+    @handler GetPodListHandler
+    get /:id/pods (DefaultIdRequest) returns ([]PodResourceList)
+
+    @doc "获取资源的labels"
+    @handler GetResourceLabelsHandler
+    get /:id/labels (DefaultIdRequest) returns (PodLabelsResponse)
+
+    @doc "停止资源"
+    @handler StopResourceHandler
+    post /:id/stop (DefaultIdRequest) returns (string)
+
+    @doc "启动资源"
+    @handler StartResourceHandler
+    post /:id/start (DefaultIdRequest) returns (string)
+
+    @doc "重启资源"
+    @handler RestartResourceHandler
+    post /:id/restart (DefaultIdRequest) returns (string)
+
+    @doc "获取资源yaml"
+    @handler GetResourceYamlHandler
+    get /:id/yaml (DefaultIdRequest) returns (string)
+
+    @doc "获取资源详情信息"
+    @handler GetResourceDetailHandler
+    get /:id/detail (DefaultIdRequest) returns (string)
+
+    @doc "注入临时容器"
+    @handler InjectEphemeralContainerHandler
+    post /:id/pod/inject (InjectEphemeralContainerRequest) returns (string)
+
+    @doc "pod驱逐"
+    @handler EvictPodHandler
+    post /:id/pod/evict (DefaultPodNameRequest) returns (string)
+
+    @doc "删除pod"
+    @handler DeletePodHandler
+    delete /:id/pod (DefaultPodNameRequest) returns (string)
+
+    @doc "查询pod详情"
+    @handler GetPodDetailHandler
+    get /:id/pod/detail (GetDefaultPodNameRequest) returns (string)
+
+    @doc "获取podyaml"
+    @handler GetPodYamlHandler
+    get /:id/pod/yaml (GetDefaultPodNameRequest) returns (string)
+
+    // 通过 clusterUuid 获取 pod yaml
+    @doc "通过 clusterUuid 获取 pod yaml"
+    @handler GetPodYamlWithClusterUuidHandler
+    get /pod/yaml-with-cluster-uuid (GetPodYamlWithClusterUuidRequest) returns (string)
+
+    // 通过 clusterUuid 获取 pod 详情
+    @doc "通过 clusterUuid 获取 pod 详情"
+    @handler GetPodDetailWithClusterUuidHandler
+    get /pod/detail-with-cluster-uuid (GetPodDetailWithClusterUuidRequest) returns (string)
+
+    // 通过 clusteruuid 注入临时容器
+    @doc "通过 clusteruuid 获取 注入临时容器"
+    @handler InjectEphemeralContainerWithClusterUuidHandler
+    post /pod/inject-with-cluster-uuid (InjectEphemeralContainerWithClusterUuidRequest) returns (string)
+
+    // 通过 clusteruuid 驱逐 pod
+    @doc "通过 clusteruuid 驱逐 pod"
+    @handler EvictPodWithClusterUuidHandler
+    post /pod/evict-with-cluster-uuid (GetPodDetailWithClusterUuidRequest) returns (string)
+
+    @doc "获取pod的所有containers"
+    @handler GetPodContainersHandler
+    get /:id/pod/containers (GetDefaultPodNameRequest) returns (ContainerInfoList)
+
+    @doc "获取pod的所有containers通过workload"
+    @handler GetWorkloadPodContainersHandler
+    get /workload/:id/pod/containers (GetDefaultPodNameRequest) returns (ContainerInfoList)
+
+    @doc "通过集群namespace获取所有containers"
+    @handler GetPodContainersWithClusterNamespaceHandler
+    get /pod/containers-with-cluster-namespace (GetPodContainersWithClusterNamespaceRequest) returns (ContainerInfoList)
+
+    // ==================== 镜像相关（使用 Comm 类型与 types/utils.go 一致）====================
+
+    @doc "查询资源使用的镜像"
+    @handler GetResourceImagesHandler
+    get /:id/images (DefaultIdRequest) returns (CommContainerInfoList)
+
+    @doc "更新资源镜像"
+    @handler UpdateImageHandler
+    post /:id/image (UpdateImageRequest) returns (string)
+
+    @doc "更新多个镜像"
+    @handler UpdateImagesHandler
+    post /:id/images (CommUpdateImagesRequest) returns (string)
+
+    // ==================== 副本数调整 ====================
+
+    @doc "查询资源副本数"
+    @handler GetResourceReplicasHandler
+    get /:id/replicas (DefaultIdRequest) returns (int32)
+
+    @doc "调整资源副本数"
+    @handler ScaleResourceHandler
+    post /:id/replicas (ReplicasResourceRequest) returns (string)
+
+    // ==================== 滚动更新策略 ====================
+
+    @doc "查询资源滚动更新策略"
+    @handler GetUpdateStrategyHandler
+    get /:id/update-strategy (DefaultIdRequest) returns (UpdateStrategyResponse)
+
+    @doc "修改资源滚动更新策略"
+    @handler UpdateUpdateStrategyHandler
+    put /:id/update-strategy (UpdateStrategyRequest) returns (string)
+
+    // ==================== 版本历史与回滚 ====================
+
+    @doc "获取版本历史（Deployment）"
+    @handler GetResourceHistoryHandler
+    get /:id/history (DefaultIdRequest) returns ([]RevisionInfo)
+
+    @doc "获取配置历史（StatefulSet/DaemonSet）"
+    @handler GetConfigHistoryHandler
+    get /:id/config-history (DefaultIdRequest) returns ([]ConfigHistoryInfo)
+
+    @doc "回滚到指定版本（Deployment）"
+    @handler RollbackToRevisionHandler
+    post /:id/rollback (RollbackToRevisionRequest) returns (string)
+
+    @doc "回滚到历史配置（StatefulSet/DaemonSet）"
+    @handler RollbackToConfigHandler
+    post /:id/rollback-config (RollbackToConfigRequest) returns (string)
+
+    // ==================== 环境变量管理 ====================
+
+    @doc "查询环境变量"
+    @handler GetEnvVarsHandler
+    get /:id/env (DefaultIdRequest) returns (EnvVarsResponse)
+
+    @doc "修改环境变量"
+    @handler UpdateEnvVarsHandler
+    put /:id/env (UpdateEnvVarsRequest) returns (string)
+
+    // ==================== 暂停/恢复更新 ====================
+
+    @doc "查询暂停状态"
+    @handler GetPauseStatusHandler
+    get /:id/pause-status (DefaultIdRequest) returns (PauseStatusResponse)
+
+    @doc "暂停更新"
+    @handler PauseResourceHandler
+    post /:id/pause (DefaultIdRequest) returns (string)
+
+    @doc "恢复更新"
+    @handler ResumeResourceHandler
+    post /:id/resume (DefaultIdRequest) returns (string)
+
+    // ==================== 资源配额管理（使用 Comm 类型与 types/utils.go 一致）====================
+
+    @doc "查询资源配额"
+    @handler GetResourceQuotaHandler
+    get /:id/resources (DefaultIdRequest) returns (CommResourcesResponse)
+
+    @doc "修改资源配额"
+    @handler UpdateResourceQuotaHandler
+    put /:id/resources (CommUpdateResourcesRequest) returns (string)
+
+    // ==================== 健康检查管理（使用 Comm 类型与 types/utils.go 一致）====================
+
+    @doc "查询健康检查配置"
+    @handler GetProbesHandler
+    get /:id/probes (DefaultIdRequest) returns (CommProbesResponse)
+
+    @doc "修改健康检查配置"
+    @handler UpdateProbesHandler
+    put /:id/probes (CommUpdateProbesRequest) returns (string)
+
+    // ==================== 调度配置管理（使用 Comm 类型与 types/utils.go 一致）====================
+
+    @doc "查询调度配置"
+    @handler GetSchedulingConfigHandler
+    get /:id/scheduling (DefaultIdRequest) returns (CommSchedulingConfig)
+
+    @doc "修改调度配置"
+    @handler UpdateSchedulingConfigHandler
+    put /:id/scheduling (CommUpdateSchedulingConfigRequest) returns (string)
+
+    // ==================== 高级容器配置管理（新增，与 types/utils.go 一致）====================
+
+    @doc "查询高级容器配置"
+    @handler GetAdvancedConfigHandler
+    get /:id/advanced-config (DefaultIdRequest) returns (CommAdvancedConfigResponse)
+
+    @doc "修改高级容器配置"
+    @handler UpdateAdvancedConfigHandler
+    put /:id/advanced-config (CommUpdateAdvancedConfigRequest) returns (string)
+
+    // ==================== 存储配置管理 ====================
+
+    @doc "查询存储配置"
+    @handler GetStorageConfigHandler
+    get /:id/storage (DefaultIdRequest) returns (StorageConfig)
+
+    @doc "修改存储配置"
+    @handler UpdateStorageConfigHandler
+    put /:id/storage (UpdateStorageConfigRequest) returns (string)
+
+    // ==================== Job 特有操作 ====================
+
+    @doc "手动运行一次（Job）"
+    @handler RunJobOnceHandler
+    post /:id/run-once (DefaultIdRequest) returns (string)
+
+    @doc "查询 Job 并行度配置"
+    @handler GetJobParallelismHandler
+    get /:id/parallelism (DefaultIdRequest) returns (JobParallelismConfig)
+
+    @doc "修改 Job 并行度配置"
+    @handler UpdateJobParallelismHandler
+    put /:id/parallelism (UpdateJobParallelismRequest) returns (string)
+
+    // ==================== CronJob 特有操作 ====================
+
+    @doc "查询 CronJob 历史 Job 列表"
+    @handler GetCronJobHistoryHandler
+    get /:id/cronjob-history (DefaultIdRequest) returns (CronJobHistoryResponse)
+
+    @doc "查询 CronJob Job 详情"
+    @handler GetCronJobJobDetailsHandler
+    get /:id/cronjob-job/job-details (GetDefaultJobNameRequest) returns (string)
+
+    @doc "删除 CronJob Job"
+    @handler DeleteCronJobJobHandler
+    delete /:id/cronjob-job/job (DeleteJobNameRequest) returns (string)
+
+    @doc "查询 CronJob 调度配置"
+    @handler GetCronJobScheduleHandler
+    get /:id/schedule (DefaultIdRequest) returns (CronJobScheduleConfig)
+
+    @doc "修改 CronJob 调度配置"
+    @handler UpdateCronJobScheduleHandler
+    put /:id/schedule (UpdateCronJobScheduleRequest) returns (string)
+
+    @doc "手动触发一次（CronJob）"
+    @handler TriggerCronJobHandler
+    post /:id/trigger (DefaultIdRequest) returns (string)
+
+    @doc "查询资源事件"
+    @handler QueryEventsHandler
+    get /events/:id/query (EventsQueryRequest) returns (EventsListResponse)
+
+    @doc "获取Pod事件"
+    @handler GetPodEventsHandler
+    get /events/pod/:Id/:podName (GetPodEventsRequest) returns (EventsListResponse)
+
+    @doc "获取命名空间事件"
+    @handler GetNamespaceEventsHandler
+    get /events/namespace/:id (GetNamespaceEventsRequest) returns (EventsListResponse)
+
+    @doc "获取 CronJob Job Spec 配置"
+    @handler GetJobSpecHandler
+    get /:id/job-spec (DefaultIdRequest) returns (JobSpecConfig)
+
+    @doc "更新 CronJob Job Spec 配置"
+    @handler UpdateJobSpecHandler
+    put /:id/job-spec (UpdateJobSpecRequest) returns (string)
+
+    // ==================== CronJob 下次执行时间 ====================
+
+    @doc "获取 CronJob 下次执行时间"
+    @handler GetNextScheduleTimeHandler
+    get /:id/next-schedule-time (DefaultIdRequest) returns (NextScheduleTimeResponse)
+
+    @doc "获取Job列表（带分页）"
+    @handler ListJobsHandler
+    get /:id/jobs (ListJobsRequest) returns (ListJobsResponse)
+
+    @doc "获取Pod列表（带分页、过滤、排序）"
+    @handler ListPodsWithPaginationHandler
+    get /:id/pods-list (ListPodsWithPaginationRequest) returns (ListPodsWithPaginationResponse)
+
+    @doc "获取指定job pod列表"
+    @handler ListJobPodsHandler
+    get /:id/job-pods (GetJobPodListRequest) returns ([]PodResourceList)
+}

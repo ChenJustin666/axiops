@@ -1,0 +1,19 @@
+# 在 values-test.yaml 之后叠加（平台中合并到当前环境 values 后预览保存）。
+# 开启 Agent 后增加内存，实际用量仍需应用压测确认。
+resources:
+  requests: {cpu: 250m, memory: 512Mi}
+  limits: {cpu: "1", memory: 1Gi}
+java:
+  opts: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=50.0
+    -XX:MaxMetaspaceSize=256m
+    -XX:+UseG1GC
+    -Dfile.encoding=UTF-8
+  heapDump:
+    enabled: true
+    existingClaim: ""
+skywalking:
+  enabled: true
+  backendService: skywalking-oap.skywalking.svc.cluster.local:11800
+  excludedPlugins: asf-dubbo,dubbo

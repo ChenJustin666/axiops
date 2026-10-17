@@ -1,0 +1,234 @@
+# AxiOps Kubernetes 部署 - 端口规范
+# 所有服务 containerPort 与 Service port 一致
+# 命名规范：axiops-<module>
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: axiops
+  labels:
+    app.kubernetes.io/part-of: axiops
+
+---
+# axiops-platform-api Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: axiops-platform-api
+  namespace: axiops
+  labels:
+    app.kubernetes.io/name: axiops-platform-api
+    app.kubernetes.io/part-of: axiops
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: axiops-platform-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: axiops-platform-api
+    spec:
+      containers:
+      - name: axiops-platform-api
+        image: registry.example.com/axiops/axiops-platform-api:latest
+        ports:
+        - containerPort: 8090
+          name: http
+          protocol: TCP
+        env:
+        - name: AXIOPS_MYSQL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: axiops-db-secret
+              key: host
+        - name: AXIOPS_MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: axiops-db-secret
+              key: password
+        livenessProbe:
+          httpGet:
+            path: /api/v1/system/health
+            port: 8090
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/v1/system/health
+            port: 8090
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: axiops-platform-api
+  namespace: axiops
+spec:
+  selector:
+    app.kubernetes.io/name: axiops-platform-api
+  ports:
+  - port: 8090
+    targetPort: 8090
+    protocol: TCP
+    name: http
+  type: ClusterIP
+
+---
+# axiops-cicd-api Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: axiops-cicd-api
+  namespace: axiops
+  labels:
+    app.kubernetes.io/name: axiops-cicd-api
+    app.kubernetes.io/part-of: axiops
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: axiops-cicd-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: axiops-cicd-api
+    spec:
+      containers:
+      - name: axiops-cicd-api
+        image: registry.example.com/axiops/axiops-cicd-api:latest
+        ports:
+        - containerPort: 8091
+          name: http
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /api/v1/system/health
+            port: 8091
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/v1/system/health
+            port: 8091
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: axiops-cicd-api
+  namespace: axiops
+spec:
+  selector:
+    app.kubernetes.io/name: axiops-cicd-api
+  ports:
+  - port: 8091
+    targetPort: 8091
+    protocol: TCP
+    name: http
+  type: ClusterIP
+
+---
+# Ingress（统一入口）
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: axiops-ingress
+  namespace: axiops
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: axiops.example.com
+    http:
+      paths:
+      - path: /api/v1/auth
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-platform-api
+            port:
+              number: 8090
+      - path: /api/v1/users
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-platform-api
+            port:
+              number: 8090
+      - path: /api/v1/roles
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-platform-api
+            port:
+              number: 8090
+      - path: /api/v1/projects
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-platform-api
+            port:
+              number: 8090
+      - path: /api/v1/clusters
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-platform-api
+            port:
+              number: 8090
+      - path: /api/v1/credentials
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-platform-api
+            port:
+              number: 8090
+      - path: /api/v1/pipelines
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-cicd-api
+            port:
+              number: 8091
+      - path: /api/v1/builds
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-cicd-api
+            port:
+              number: 8091
+      - path: /api/v1/releases
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-cicd-api
+            port:
+              number: 8091
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: axiops-web
+            port:
+              number: 80

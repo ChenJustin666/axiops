@@ -1,0 +1,296 @@
+/**
+ * 统一折叠面板样式
+ * 用于 Kubernetes 资源创建/编辑对话框
+ * 支持 ConfigMap, Secret, Service, Ingress, PVC, Role, RoleBinding, ServiceAccount 等
+ *
+ * 使用方式：
+ * <ElCollapse v-model="activeNames" class="unified-collapse">
+ *   <ElCollapseItem name="basic">
+ *     <template #title>
+ *       <div class="unified-collapse-header">
+ *         <div class="header-left">
+ *           <IconComponent :size="16" class="header-icon" />
+ *           <span class="header-title">标题文字</span>
+ *           <span class="optional-mark">可选</span>
+ *         </div>
+ *       </div>
+ *     </template>
+ *     <!-- 内容 -->
+ *   </ElCollapseItem>
+ * </ElCollapse>
+ */
+
+// 统一折叠面板样式
+.unified-collapse {
+  border: none;
+  background: transparent;
+
+  // 折叠面板整体样式
+  :deep(.el-collapse-item) {
+    background: #fff;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+
+    &.is-active {
+      border-color: #409eff;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  // 折叠面板头部样式
+  :deep(.el-collapse-item__header) {
+    height: 48px;
+    line-height: 48px;
+    background: #f5f7fa;
+    border-bottom: 1px solid #e4e7ed;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+    transition: all 0.3s;
+
+    &:hover {
+      background: #ecf5ff;
+    }
+
+    .el-collapse-item__arrow {
+      margin-right: 8px;
+      color: #909399;
+      transition: all 0.3s;
+    }
+
+    &.is-active {
+      .el-collapse-item__arrow {
+        transform: rotate(90deg);
+        color: #409eff;
+      }
+    }
+  }
+
+  // 折叠面板内容样式
+  :deep(.el-collapse-item__wrap) {
+    background: #fff;
+    border-bottom: none;
+  }
+
+  :deep(.el-collapse-item__content) {
+    padding: 20px 24px;
+  }
+}
+
+// 面板标题容器样式
+.unified-collapse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+
+    .header-icon {
+      font-size: 16px;
+      color: #409eff;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      flex: 1;
+    }
+
+    .optional-mark {
+      margin-left: 8px;
+      font-size: 11px;
+      font-weight: 400;
+      color: #909399;
+      background: #f4f4f5;
+      padding: 2px 6px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .help-icon {
+      cursor: help;
+      color: #909399;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #606266;
+      }
+    }
+  }
+}
+
+// 键值对列表样式 (用于 Labels, Annotations 等)
+.unified-key-value-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .key-value-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border-radius: 4px;
+    border: 1px solid #dcdfe6;
+    transition: border-color 0.2s;
+
+    &:hover {
+      border-color: #409eff;
+    }
+
+    .item-icon {
+      color: #67c23a;
+      flex-shrink: 0;
+    }
+
+    .item-key {
+      width: 200px;
+      flex-shrink: 0;
+    }
+
+    .separator {
+      color: #909399;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .item-value {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
+// 表单项统一样式
+.unified-form-item {
+  margin-bottom: 16px;
+
+  :deep(.el-form-item__label) {
+    font-size: 13px;
+    font-weight: 500;
+    color: #303133;
+  }
+
+  :deep(.el-input__suffix) {
+    .help-icon {
+      cursor: help;
+      color: #909399;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #606266;
+      }
+    }
+  }
+}
+
+// 按钮样式
+.unified-add-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+// 加载状态样式
+.unified-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #909399;
+  gap: 16px;
+
+  .loading-text {
+    margin-top: 12px;
+    color: #909399;
+    font-size: 13px;
+  }
+
+  .el-icon {
+    color: #409eff;
+  }
+}
+
+// 表单容器样式
+.unified-form-container {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 8px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 3px;
+  }
+}
+
+// YAML 容器样式
+.unified-yaml-container {
+  min-height: 500px;
+}
+
+// 编辑模式切换栏样式
+.unified-mode-switch {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+
+  .radio-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  :deep(.el-radio-group) {
+    .el-radio-button__inner {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+}
+
+// 对话框底部按钮样式
+.unified-dialog-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+// 表单项提示样式
+.unified-form-tip {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #909399;
+
+  &.warning {
+    color: #e6a23c;
+  }
+}

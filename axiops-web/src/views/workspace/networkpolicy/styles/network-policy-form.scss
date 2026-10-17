@@ -1,0 +1,403 @@
+/**
+ * NetworkPolicy 表单样式
+ * 基于 cluster resource 表单统一样式
+ */
+
+// 引用资源表单的样式变量和混合器
+@use '../../../cluster/resource/styles/resource-form.scss' as *;
+
+// NetworkPolicy 专用样式扩展
+.network-policy-form {
+  @include form-container;
+
+  // ElCollapse 自定义样式
+  .form-collapse {
+    border: none;
+    background: transparent;
+
+    :deep(.el-collapse-item) {
+      margin-bottom: $spacing-md;
+      border-radius: $radius-md;
+      border: 1px solid #dcdfe6;
+      background: #fff;
+      overflow: hidden;
+      transition: border-color 0.3s;
+
+      &.is-active {
+        border-color: #409eff;
+      }
+
+      &.collapse-section-item {
+        .el-collapse-item__header {
+          height: 48px;
+          line-height: 48px;
+          background: #f5f7fa;
+          border-bottom: 1px solid #e4e7ed;
+          padding: 0 $spacing-md;
+          font-size: 14px;
+          font-weight: 500;
+          color: #303133;
+          transition: all 0.3s;
+
+          &:hover {
+            background: #ecf5ff;
+          }
+
+          .el-collapse-item__arrow {
+            margin-right: $spacing-xs;
+            color: #909399;
+            transition: transform 0.3s, color 0.3s;
+          }
+
+          &.is-active {
+            .el-collapse-item__arrow {
+              transform: rotate(90deg);
+              color: #409eff;
+            }
+          }
+        }
+
+        .el-collapse-item__wrap {
+          border-bottom: none;
+          background: #fff;
+
+          .el-collapse-item__content {
+            padding: 20px 24px;
+          }
+        }
+      }
+    }
+  }
+
+  // 折叠面板标题样式
+  .collapse-title {
+    display: flex;
+    align-items: center;
+    width: 100%;
+
+    .title-icon {
+      margin-right: 8px;
+      font-size: 16px;
+      color: #409eff;
+    }
+
+    span {
+      flex: 1;
+    }
+
+    :deep(svg) {
+      color: #409eff;
+      margin-right: 8px;
+    }
+  }
+
+  // 对端配置区域样式
+  .peer-config {
+    padding: $spacing-md;
+    background: #f5f7fa;
+    border-radius: $radius-md;
+    border: 1px solid #e4e7ed;
+
+    .peer-type-selector {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+      margin-bottom: $spacing-sm;
+
+      .el-radio-group {
+        :deep(.el-radio-button__inner) {
+          border-radius: $radius-sm !important;
+        }
+      }
+    }
+
+    .selector-config {
+      margin-top: $spacing-sm;
+
+      &.pod-selector-config,
+      &.namespace-selector-config {
+        .selector-mode {
+          display: flex;
+          align-items: center;
+          gap: $spacing-sm;
+          margin-bottom: $spacing-sm;
+          padding: $spacing-xs;
+          background: #fff;
+          border-radius: $radius-sm;
+        }
+
+        .namespace-warning {
+          margin-top: $spacing-xs;
+          padding: 8px 12px;
+          background: #fdf6ec;
+          border-radius: $radius-sm;
+          font-size: 12px;
+          color: #e6a23c;
+
+          .warning-icon {
+            margin-right: 4px;
+          }
+        }
+      }
+    }
+
+    .ipblock-config {
+      margin-top: $spacing-sm;
+
+      .cidr-input {
+        margin-bottom: $spacing-sm;
+      }
+
+      .except-list {
+        margin-top: $spacing-sm;
+
+        .except-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+      }
+    }
+  }
+
+  // 标签选择器区域
+  .label-selector {
+    .key-value-list {
+      margin-bottom: 12px;
+
+      .key-value-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        padding: 10px 12px;
+        background: #f5f7fa;
+        border-radius: $radius-md;
+        border: 1px solid #e4e7ed;
+        transition: border-color 0.2s;
+
+        &:hover {
+          border-color: #409eff;
+        }
+
+        .key-input {
+          flex: 0 0 180px;
+        }
+
+        .value-input {
+          flex: 1;
+        }
+
+        .separator {
+          flex-shrink: 0;
+          color: #909399;
+          font-weight: 500;
+          font-size: 14px;
+        }
+      }
+    }
+
+    .label-actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  // 规则卡片样式
+  .rule-card {
+    margin-bottom: $spacing-md;
+    padding: $spacing-md;
+    background: #fff;
+    border-radius: $radius-md;
+    border: 1px solid #e4e7ed;
+    transition: border-color 0.2s;
+
+    &:hover {
+      border-color: #c0c4cc;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .rule-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: $spacing-sm;
+      padding-bottom: $spacing-sm;
+      border-bottom: 1px dashed #e4e7ed;
+
+      .rule-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #303133;
+      }
+    }
+
+    .rule-body {
+      .rule-section {
+        margin-bottom: $spacing-md;
+        padding: $spacing-sm;
+        background: #fafafa;
+        border-radius: $radius-sm;
+        border: 1px solid #ebeef5;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .section-label {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: $spacing-xs;
+          font-size: 13px;
+          font-weight: 500;
+          color: #606266;
+        }
+
+        .ports-list,
+        .peers-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 10px;
+        }
+
+        .port-item,
+        .peer-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px;
+          background: #fff;
+          border-radius: $radius-sm;
+          border: 1px solid #e4e7ed;
+          transition: border-color 0.2s;
+
+          &:hover {
+            border-color: #409eff;
+          }
+        }
+      }
+    }
+  }
+
+  // 空状态提示
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    color: #909399;
+    font-size: 13px;
+    background: #f5f7fa;
+    border-radius: $radius-md;
+    border: 1px dashed #dcdfe6;
+
+    &.warning {
+      color: #e6a23c;
+      background: #fdf6ec;
+      border-color: #f5dab1;
+    }
+  }
+}
+
+// Pod 标签选择弹窗样式
+.pod-label-selector-dialog {
+  .dialog-content {
+    .selector-step {
+      margin-bottom: 20px;
+      padding: 16px;
+      background: #f5f7fa;
+      border-radius: $radius-md;
+      border: 1px solid #e4e7ed;
+
+      .step-label {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: #303133;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px dashed #e4e7ed;
+
+        .step-number {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          margin-right: 10px;
+          background: #409eff;
+          color: #fff;
+          border-radius: 50%;
+          font-size: 12px;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .namespace-select-hint {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #ecf5ff;
+      border-radius: $radius-sm;
+      font-size: 12px;
+      color: #409eff;
+
+      .hint-icon {
+        margin-right: 4px;
+      }
+    }
+
+    .labels-grid {
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #fff;
+      border-radius: $radius-sm;
+      border: 1px solid #ebeef5;
+
+      .label-checkbox {
+        margin-bottom: 6px;
+        padding: 8px 10px;
+        background: #f5f7fa;
+        border-radius: $radius-sm;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+
+        &:hover {
+          border-color: #409eff;
+          background: #ecf5ff;
+        }
+
+        .label-key {
+          font-weight: 500;
+          color: #303133;
+        }
+
+        .label-value {
+          color: #606266;
+          margin-left: 8px;
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e4e7ed;
+  }
+}

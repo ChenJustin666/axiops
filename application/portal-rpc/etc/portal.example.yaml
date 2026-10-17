@@ -1,0 +1,94 @@
+Name: portal.rpc
+ListenOn: 0.0.0.0:30010
+Timeout: 30000
+DemoMode: false
+PortalName: "AxiOps"
+PortalUrl: "http://10.8.8.6:8811"
+#Etcd:
+#  Hosts:
+#  - 172.16.1.61:2379
+#  Key: portal.rpc
+
+Log:
+  ServiceName: portal-rpc  # ServiceName 表示服务名称，可选项�?
+  Mode: "console"                # Mode 表示日志记录模式，默认为 "console"�? "console"：日志输出到控制台�? "file"：日志输出到文件�? "volume"：用于K8s，在日志文件名中添加主机名前缀�?
+  Encoding: "plain"               # Encoding 表示编码类型，默认为 "json"�? "json"：使�?JSON 编码�? "plain"：使用纯文本编码，通常用于开发环境�?
+  TimeFormat: "2006-01-02 15:04:05"  # TimeFormat 表示时间格式，可选项�?# 默认�?"2006-01-02T15:04:05.000Z07:00"�?
+  Path: "logs"                   # Path 表示日志文件路径，默认为 "logs"�?
+  Level: "info"                  # Level 表示日志级别，默认为 "info"�? 可选项�?"debug"�?info"�?error"�?severe"�?
+  MaxContentLength: 1024         # MaxContentLength 表示最大内容字节数，默认为无限制�?
+  Compress: false                # Compress 表示是否压缩日志文件，默认为 false�?
+  Stat: true                     # Stat 表示是否记录统计信息，默认为 true�?
+  KeepDays: 7                    # KeepDays 表示日志文件保留的天数。默认为保留所有文件�? 仅在 Mode �?"file" �?"volume" 时生效，并且 Rotation �?"daily" �?"size" 时有效�?
+  StackCooldownMillis: 100       # StackCooldownMillis 表示堆栈日志的冷却时间，默认�?100ms�?
+  MaxBackups: 0                  # MaxBackups 表示保留多少个备份日志文件�? 表示保留所有文件�? 仅在 RotationRuleType �?"size" 时生效�? 即使 MaxBackups 设置�?0，如果达�?KeepDays 限制，日志文件仍然会被删除�?
+  MaxSize: 0                     # MaxSize 表示日志文件的最大大小（单位为MB），0 表示不限制�? 仅在 RotationRuleType �?"size" 时生效�?
+  Rotation: "daily"              # Rotation 表示日志轮换规则类型，默认为 "daily"�? "daily"：按天轮换�? # "size"：按大小限制轮换�?
+
+Cache:
+  Host: 192.168.200.13:6379
+  Type: node # node or cluster
+  Pass: "3HZMi7xoGTdk3Upj"
+  Tls: false # bool
+  NonBlock: true # bool
+  PingTimeout: 10s # default 1s
+
+Mysql:
+  DataSource: "root:xc#1sk8sklSS@tcp(192.168.200.13:3306)/autoops?charset=utf8mb4&parseTime=True&loc=Local&timeout=10s"
+  MaxOpenConns: 150
+  MaxIdleConns: 50
+  ConnMaxLifetime: 30m
+
+DBCache:
+  - Host: 192.168.200.13:6379
+    Type: node # node or cluster
+    Pass: "3HZMi7xoGTdk3Upj"
+    Tls: false # bool
+    NonBlock: true # bool
+    PingTimeout: 3s # default 1s
+
+StorageConf:
+  Provider: minio
+  Endpoints: [ "192.168.200.13:9000" ]
+  EndpointProxy: "http://192.168.200.13:9000"
+  AccessKey: "REPLACE_ME"
+  AccessSecret: "REPLACE_ME"
+  BucketName: test-bucket
+  CAFile: ""   # TLS CA证书文件路径
+  CAKey: ""   # TLS CA密钥文件路径
+  UseTLS: false
+
+AuthConfig:
+  AccessSecret: "REPLACE_ME"
+  AccessExpire: 86400
+  RefreshSecret: "REPLACE_ME"
+  RefreshExpire: 604800
+  RefreshAfter: 604800
+
+# 告警聚合器配�?
+Aggregator:
+  Enabled: true                    # 启用告警聚合�?
+  MaxBufferSize: 1000             # 最大缓冲区大小
+  GlobalBufferWindow: 30s         # 全局缓冲窗口，用于跨调用聚合�?0秒）
+  SeverityWindows:                # 不同级别的聚合时间窗�?
+    Critical: 0s                  # Critical 级别立即发�?
+    Warning: 1m                   # Warning 级别聚合1分钟
+    Info: 1m                      # Info 级别聚合1分钟
+    Default: 1m                   # 默认级别聚合1分钟
+
+# Leader Election 配置（用于告警聚合器�?
+# 支持三级降级策略：InCluster -> Kubeconfig -> Redis
+LeaderElection:
+  Enabled: false                             # 是否启用 Leader Election
+  LeaseName: portal-rpc-aggregator-leader    # Lease 资源名称
+  LeaseNamespace: kube-nova                  # Lease 资源所在命名空�?
+  LeaseDuration: 15s                         # 租约有效�?
+  RenewDeadline: 10s                         # 续约超时
+  RetryPeriod: 2s                            # 重试间隔
+# 下游 RPC 服务
+ManagerRpc:
+  Endpoints:
+    - 127.0.0.1:30011
+DevopsManagerRpc:
+  Endpoints:
+    - 127.0.0.1:30031

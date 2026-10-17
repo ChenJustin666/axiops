@@ -1,0 +1,88 @@
+// =====================================================================
+// AxiOps 品牌设计 Token（只定义变量，不覆盖任何现有选择器）
+// 规范详见：E:/axiops/brand/brand-guide.html
+// 使用方式：var(--ax-blue) 等，可安全地在任何组件中引用
+//
+// 分层约定：
+//   1. 原始色 / 几何 (--ax-blue、--ax-radius-*、--ax-space-*)
+//   2. 语义表面 (--ax-surface-*、--ax-line-*) —— 浅/深色各自映射
+//   3. 高程     (--ax-shadow-*)          —— 浅/深色各自映射
+// 组件只应消费第 2、3 层，这样换皮时不用改组件。
+// =====================================================================
+
+:root {
+  // ---- 品牌色 ----
+  --ax-blue: #1d84ff; // 品牌主色（与 systemMainColor[0] 保持一致）
+  --ax-blue-deep: #0b5fe0; // 渐变起点 / hover 加深
+  --ax-blue-ink: #0a47c2; // 深色强调
+  --ax-cyan: #3fc6ff; // 渐变终点 / 节点高亮
+  --ax-sky: #38c0fc; // 辅助浅蓝
+  --ax-ink: #0b1220; // 深色侧边栏 / 标题文字
+  --ax-slate: #5a6b85; // 次要文字
+  --ax-mute: #8a97ab; // 弱化文字
+  --ax-mist: #f6f8fc; // 页面底色 / 分组背景
+
+  // ---- 品牌渐变（仅用于标志、图标、Hero 与关键数据）----
+  --ax-gradient: linear-gradient(135deg, #0b5fe0 0%, #1d84ff 52%, #3fc6ff 100%);
+
+  // ---- 语义色（与 Element Plus 对齐，供图表等非组件场景使用）----
+  --ax-success: #10b981;
+  --ax-warning: #f59e0b;
+  --ax-danger: #f43f5e;
+
+  // ---- 圆角 ----
+  --ax-radius-xs: 6px; // 徽标 / 标签
+  --ax-radius-sm: 8px; // 按钮 / 输入框
+  --ax-radius-md: 12px; // 卡片 / 面板
+  --ax-radius-lg: 18px; // 弹窗 / 大容器
+
+  // ---- 间距（4 的倍数，形成节奏）----
+  --ax-space-1: 4px; // 图标与文字间隙
+  --ax-space-2: 8px; // 按钮内部、紧凑列表
+  --ax-space-3: 12px; // 表单项之间
+  --ax-space-4: 16px; // 卡片内边距
+  --ax-space-5: 20px; // 卡片内边距（宽松）
+  --ax-space-6: 24px; // 卡片之间、区块间距
+  --ax-space-8: 32px; // 页面级区块分隔
+
+  // ---- 语义表面（页面底 / 卡片面 / 浮起面 / 描边）----
+  --ax-surface-page: #ffffff;
+  --ax-surface-card: #ffffff;
+  --ax-surface-raised: #ffffff;
+  --ax-surface-sunken: var(--ax-mist);
+  --ax-surface-hover: #f4f7fb;
+  --ax-line: #e4e9f0; // 常规描边
+  --ax-line-strong: #d4dbe6; // 强调描边 / 分隔
+
+  // ---- 高程（浅色：冷调、低对比、双层更自然）----
+  --ax-shadow-xs: 0 1px 2px rgb(16 45 90 / 5%);
+  --ax-shadow-sm: 0 1px 2px rgb(16 45 90 / 5%), 0 2px 6px rgb(16 45 90 / 5%);
+  --ax-shadow-md: 0 2px 4px rgb(16 45 90 / 5%), 0 8px 20px rgb(16 45 90 / 8%);
+  --ax-shadow-lg: 0 4px 8px rgb(16 45 90 / 6%), 0 18px 40px rgb(16 45 90 / 12%);
+  --ax-shadow-card: 0 1px 2px rgb(16 45 90 / 4%), 0 6px 20px rgb(16 45 90 / 7%);
+  --ax-shadow-pop: 0 16px 40px rgb(16 45 90 / 16%);
+  --ax-shadow-brand: 0 4px 14px rgb(29 132 255 / 28%); // 品牌元素专用辉光
+}
+
+// 暗黑模式：表面与高程单独映射（纯黑投影在深色底上会「消失」，故提高不透明度）
+html.dark {
+  --ax-mist: #0d1421;
+  --ax-slate: #9aa6ba;
+  --ax-mute: #6b7789;
+
+  --ax-surface-page: #0b1220;
+  --ax-surface-card: #141a28;
+  --ax-surface-raised: #1a2130;
+  --ax-surface-sunken: #0d1421;
+  --ax-surface-hover: #1c2434;
+  --ax-line: rgb(255 255 255 / 11%);
+  --ax-line-strong: rgb(255 255 255 / 18%);
+
+  --ax-shadow-xs: 0 1px 2px rgb(0 0 0 / 40%);
+  --ax-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%), 0 2px 6px rgb(0 0 0 / 32%);
+  --ax-shadow-md: 0 2px 4px rgb(0 0 0 / 40%), 0 8px 20px rgb(0 0 0 / 42%);
+  --ax-shadow-lg: 0 4px 8px rgb(0 0 0 / 44%), 0 18px 40px rgb(0 0 0 / 52%);
+  --ax-shadow-card: 0 1px 2px rgb(0 0 0 / 38%), 0 6px 20px rgb(0 0 0 / 36%);
+  --ax-shadow-pop: 0 16px 40px rgb(0 0 0 / 60%);
+  --ax-shadow-brand: 0 4px 14px rgb(29 132 255 / 38%);
+}

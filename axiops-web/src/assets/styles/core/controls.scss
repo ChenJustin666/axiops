@@ -1,0 +1,117 @@
+// =====================================================================
+// AxiOps 控件层级（本轮：按钮）
+//
+// 设计目标：主 / 次 / 弱 三级动作一眼可分。
+//   一级 primary  —— 实心品牌色、字重 500、hover 加深（而不是变浅）
+//   二级 default  —— 白底 + 发丝描边、字重 400、hover 才染品牌色
+//   三级 plain    —— 浅底无描边
+//   四级 text/link—— 无底色，hover 出浅底药丸
+//
+// 三条硬约束（都是踩过的坑，改动前请先读）：
+//
+//   1. **不硬编码 --ax-blue 作为按钮色**。系统主色可在 7 个预设色间切换
+//      （setElementThemeColor → --el-color-primary），一律基于
+//      var(--el-color-primary) 用 color-mix 推导，才能跟随主题。
+//
+//   2. **`html` 前缀 + `:where()` 包裹 :not() 链**，把权重固定在 (0,1,1)：
+//      · 压得过 Element Plus 按需注入的 (0,1,0) 规则（注入顺序不确定，
+//        不能靠引入先后，所以不用裸 .el-button）；
+//      · 又被各业务页 `:deep(.el-button)` 之类的 (0,2,0)+ 规则覆盖，
+//        不会破坏页面已有的自定义按钮配色（如工作台的青绿主色）。
+//      若把 :not() 直接写在外面，权重会飙到 (0,3,1)+，反而污染全站按钮。
+//
+//   3. **plain 只去描边，不设背景**：EP 的 is-plain 背景是按 type 推导的，
+//      统一染成品牌蓝会让 plain danger / success 一起变蓝。
+//
+// 只调整视觉，不改任何交互逻辑。
+// =====================================================================
+
+// ---- 1. 键盘可达性：统一品牌色焦点环（鼠标点击不出现）----
+html .el-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--el-color-primary) 45%, transparent);
+  outline-offset: 1px;
+}
+
+// 图标与文字间距统一（EP 用 margin 控制，这里对齐到 6px）
+html .el-button > .el-icon + span {
+  margin-left: 6px;
+}
+
+// ---- 2. 一级：实心主按钮 ----
+// hover 由 EP 默认的「变浅」改为「加深」，按压反馈更明确
+html .el-button--primary:where(:not(.is-plain):not(.is-text):not(.is-link)) {
+  box-shadow: none;
+}
+
+html .el-button--primary:where(:not(.is-plain):not(.is-text):not(.is-link)):hover,
+html .el-button--primary:where(:not(.is-plain):not(.is-text):not(.is-link)):focus {
+  border-color: color-mix(in srgb, var(--el-color-primary) 88%, #000);
+  background-color: color-mix(in srgb, var(--el-color-primary) 88%, #000);
+}
+
+html .el-button--primary:where(:not(.is-plain):not(.is-text):not(.is-link)):active {
+  border-color: color-mix(in srgb, var(--el-color-primary) 76%, #000);
+  background-color: color-mix(in srgb, var(--el-color-primary) 76%, #000);
+}
+
+// 需要「抬高」的主行动（Hero / 空状态 / 对话框确认）可加 .is-elevated
+html .el-button--primary.is-elevated {
+  box-shadow: var(--ax-shadow-brand);
+}
+
+// ---- 3. 二级：默认按钮（无 type）----
+// 发丝描边 + 常规字重；hover 才染品牌色，不与主按钮抢注意力
+$_ax-default-btn: ':not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--info):not(.is-text):not(.is-link)';
+
+html .el-button:where(#{$_ax-default-btn}) {
+  border-color: var(--ax-line-strong);
+  background-color: var(--ax-surface-card);
+  box-shadow: none;
+
+  &:hover,
+  &:focus {
+    border-color: color-mix(in srgb, var(--el-color-primary) 45%, var(--ax-line-strong));
+    background-color: color-mix(in srgb, var(--el-color-primary) 5%, var(--ax-surface-card));
+    color: var(--el-color-primary);
+  }
+
+  &:active {
+    border-color: color-mix(in srgb, var(--el-color-primary) 60%, var(--ax-line-strong));
+    background-color: color-mix(in srgb, var(--el-color-primary) 9%, var(--ax-surface-card));
+  }
+}
+
+// ---- 4. 三级：plain（只去描边，保留 EP 按 type 推导的浅底）----
+html .el-button.is-plain:where(:not(.is-text):not(.is-link)) {
+  border-color: transparent;
+
+  &:hover,
+  &:focus {
+    border-color: transparent;
+  }
+}
+
+// ---- 5. 四级：text / link ----
+html .el-button:where(.is-text, .is-link) {
+  box-shadow: none;
+
+  &:hover,
+  &:focus {
+    background-color: color-mix(in srgb, var(--el-color-primary) 8%, transparent);
+  }
+}
+
+// ---- 6. 禁用态：一律降噪，不投影 ----
+html .el-button.is-disabled,
+html .el-button.is-disabled:hover,
+html .el-button.is-disabled:focus {
+  box-shadow: none;
+  background-image: none;
+}
+
+// ---- 7. 操作条：统一「主 + 次」按钮的间距（只改间距，不改定位）----
+html .ax-actions {
+  display: inline-flex;
+  gap: var(--ax-space-2);
+  align-items: center;
+}

@@ -1,0 +1,58 @@
+{{- $kind := .Values.workload.kind -}}
+{{- if has $kind (list "Deployment" "StatefulSet" "DaemonSet") }}
+apiVersion: apps/v1
+{{- else }}
+apiVersion: batch/v1
+{{- end }}
+kind: {{ $kind }}
+metadata:
+  name: {{ .Release.Name }}{{ if eq $kind "Job" }}-r{{ .Release.Revision }}{{ end }}
+  labels:
+    {{- include "axiops.labels" . | nindent 4 }}
+spec:
+  {{- if has $kind (list "Deployment" "StatefulSet" "DaemonSet") }}
+  {{- if and (ne $kind "DaemonSet") (not .Values.autoscaling.enabled) }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "axiops.selector" . | nindent 6 }}
+  {{- if eq $kind "Deployment" }}
+  strategy:
+    {{- toYaml .Values.deployment.strategy | nindent 4 }}
+  progressDeadlineSeconds: {{ .Values.deployment.progressDeadlineSeconds }}
+  {{- else if eq $kind "StatefulSet" }}
+  serviceName: {{ .Release.Name }}-headless
+  podManagementPolicy: {{ .Values.statefulSet.podManagementPolicy }}
+  updateStrategy:
+    {{- toYaml .Values.statefulSet.updateStrategy | nindent 4 }}
+  {{- if or (and .Values.persistence.enabled (not .Values.persistence.existingClaim)) .Values.statefulSet.volumeClaimTemplates }}
+  volumeClaimTemplates:
+    {{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
+    - metadata:
+        name: data
+      spec:
+        {{- include "axiops.pvcSpec" . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.statefulSet.volumeClaimTemplates }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  {{- else }}
+  updateStrategy:
+    {{- toYaml .Values.daemonSet.updateStrategy | nindent 4 }}
+  {{- end }}
+  template:
+    {{- include "axiops.pod" . | nindent 4 }}
+  {{- else if eq $kind "Job" }}
+  {{- include "axiops.jobSpec" . | nindent 2 }}
+  {{- else }}
+  schedule: {{ .Values.cronJob.schedule | quote }}
+  suspend: {{ .Values.cronJob.suspend }}
+  concurrencyPolicy: {{ .Values.cronJob.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronJob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronJob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      {{- include "axiops.jobSpec" . | nindent 6 }}
+  {{- end }}

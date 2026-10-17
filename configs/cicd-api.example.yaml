@@ -1,0 +1,35 @@
+# AxiOps CI/CD API 配置
+Name: axiops-cicd-api
+Host: 0.0.0.0
+Port: 8091
+
+MySQL:
+  Host: 127.0.0.1
+  Port: 3306
+  User: root
+  Password: "REPLACE_ME"
+  Database: axiops
+  MaxOpenConns: 50
+  MaxIdleConns: 10
+Migrations:
+  # DDL is applied once by axiops-migrate before services start.
+  AutoApply: false
+  LockTimeoutSeconds: 30
+Redis:
+  Host: 127.0.0.1:6379
+  Password: "REPLACE_ME"
+  DB: 2  
+JWT:
+  Secret: "REPLACE_ME"
+  AccessExpireSeconds: 7200
+  RefreshExpireSeconds: 604800
+
+CredentialEncryptionKey: ""
+
+Kubernetes:
+  FieldManager: axiops-cicd
+  ForceApply: false
+  QPS: 20
+  Burst: 40
+  TimeoutSeconds: 30
+  ClientCacheSecs: 60
